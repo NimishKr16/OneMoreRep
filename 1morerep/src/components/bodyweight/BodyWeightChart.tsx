@@ -28,6 +28,11 @@ const formatXAxis = (value: string) => {
   });
 };
 
+const formatTooltipLabel = (label: React.ReactNode) => {
+  if (typeof label !== "string") return "";
+  return formatXAxis(label);
+};
+
 export default function BodyWeightChart({ data }: BodyWeightChartProps) {
   if (data.length === 0) return null;
 
@@ -63,7 +68,7 @@ export default function BodyWeightChart({ data }: BodyWeightChartProps) {
               color: "#e5e7eb",
               fontSize: 12,
             }}
-            labelFormatter={formatXAxis}
+            labelFormatter={formatTooltipLabel}
           />
           <Line
             type="monotone"
