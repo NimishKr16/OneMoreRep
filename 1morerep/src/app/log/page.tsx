@@ -258,7 +258,7 @@ export default function LogWorkoutPage() {
             <select
               value={workoutType}
               onChange={(e) => setWorkoutType(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
+              className="w-full max-w-xs px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
             >
               {WORKOUT_TYPES.map((type) => (
                 <option key={type} value={type}>
