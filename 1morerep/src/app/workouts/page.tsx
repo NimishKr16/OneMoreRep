@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import WorkoutsList from "@/components/workouts/WorkoutsList";
 import WorkoutTypeFilter from "@/components/workouts/WorkoutTypeFilter";
 import BottomNav from "@/components/BottomNav";
+import NewUserEmptyState from "@/components/home/NewUserEmptyState";
 import { WorkoutRow } from "@/components/workouts/WorkoutAccordionCard";
 import { HiMenuAlt2, HiPlus, HiUser } from "react-icons/hi";
 
@@ -134,6 +135,15 @@ export default function WorkoutsPage() {
                 <span className="inline-flex w-8 h-8 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
                 <p className="text-gray-400 text-sm">Loading workouts</p>
               </div>
+            ) : !error && workouts.length === 0 ? (
+              <NewUserEmptyState
+                eyebrow="Workouts"
+                title="Log your first workout"
+                motivationLine="Start with one session and build your momentum."
+                description="One More Rep captures sets, volume, and PRs so progress stays clear."
+                ctaLabel="Add your first workout"
+                ctaHref="/log"
+              />
             ) : (
               <WorkoutsList
                 workouts={workouts}

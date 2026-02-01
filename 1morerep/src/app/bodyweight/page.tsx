@@ -10,6 +10,7 @@ import BodyWeightCurrentCard from "@/components/bodyweight/BodyWeightCurrentCard
 import BodyWeightHistory from "@/components/bodyweight/BodyWeightHistory";
 import BodyWeightLogForm from "@/components/bodyweight/BodyWeightLogForm";
 import BottomNav from "@/components/BottomNav";
+import NewUserEmptyState from "@/components/home/NewUserEmptyState";
 import { HiMenuAlt2, HiUser } from "react-icons/hi";
 import { GiWeightScale } from "react-icons/gi";
 
@@ -135,37 +136,49 @@ export default function BodyWeightPage() {
               </div>
             ) : (
               <>
-                <BodyWeightCurrentCard
-                  weight={latestLog?.weight ?? null}
-                  loggedAt={latestLog?.logged_at ?? null}
-                  isEmpty={logs.length === 0}
-                />
-
-                <BodyWeightChart data={chartData} />
-
-                {showForm ? (
-                  <BodyWeightLogForm onSave={handleSave} isSaving={isSaving} />
+                {logs.length === 0 ? (
+                  showForm ? (
+                    <BodyWeightLogForm
+                      onSave={handleSave}
+                      isSaving={isSaving}
+                    />
+                  ) : (
+                    <NewUserEmptyState
+                      eyebrow="Body Weight"
+                      title="Log your first weigh-in"
+                      motivationLine="A single entry starts your trend."
+                      description="Track changes over time and stay consistent with your goals."
+                      ctaLabel="Log bodyweight"
+                      onCtaClick={() => setShowForm(true)}
+                    />
+                  )
                 ) : (
-                  <button
-                    onClick={() => setShowForm(true)}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all"
-                  >
-                    + Log Bodyweight
-                  </button>
-                )}
+                  <>
+                    <BodyWeightCurrentCard
+                      weight={latestLog?.weight ?? null}
+                      loggedAt={latestLog?.logged_at ?? null}
+                      isEmpty={logs.length === 0}
+                    />
 
-                {logs.length === 0 && !showForm && (
-                  <div className="rounded-xl border border-gray-800 bg-gray-950/60 p-4 text-center">
-                    <p className="text-white font-semibold mb-2">
-                      First entry unlocks your trend
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      Log today’s weight to start tracking your progress.
-                    </p>
-                  </div>
-                )}
+                    <BodyWeightChart data={chartData} />
 
-                <BodyWeightHistory items={historyItems} />
+                    {showForm ? (
+                      <BodyWeightLogForm
+                        onSave={handleSave}
+                        isSaving={isSaving}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setShowForm(true)}
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all"
+                      >
+                        + Log Bodyweight
+                      </button>
+                    )}
+
+                    <BodyWeightHistory items={historyItems} />
+                  </>
+                )}
               </>
             )}
           </div>

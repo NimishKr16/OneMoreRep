@@ -13,6 +13,7 @@ import WorkoutFrequencyChart, {
 import RecentWorkoutsList from "@/components/home/RecentWorkoutsList";
 import { WorkoutRow } from "@/components/workouts/WorkoutAccordionCard";
 import { HiFire } from "react-icons/hi2";
+import NewUserEmptyState from "@/components/home/NewUserEmptyState";
 import { HiMenuAlt2, HiPencilAlt, HiUser } from "react-icons/hi";
 import { TbArrowDown, TbArrowUp } from "react-icons/tb";
 
@@ -333,6 +334,12 @@ export default function HomeClient({ user }: HomeClientProps) {
     !hasLoadedFrequency ||
     !hasLoadedRecentWorkouts;
 
+  const isNewUser =
+    !isHomeLoading &&
+    !lastWorkoutSummary &&
+    recentWorkouts.length === 0 &&
+    frequencyPoints.length === 0;
+
   return (
     <div className="flex min-h-screen bg-black">
       {/* Sidebar */}
@@ -378,6 +385,15 @@ export default function HomeClient({ user }: HomeClientProps) {
                 <span className="inline-flex w-8 h-8 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
                 <p className="text-gray-400 text-sm">Loading your dashboard</p>
               </div>
+            ) : isNewUser ? (
+              <NewUserEmptyState
+                eyebrow="Welcome to One More Rep"
+                title="Ready for your first workout?"
+                motivationLine="Small starts turn into big wins."
+                description="One More Rep helps you show up, track progress, and keep the momentum going."
+                ctaLabel="Add your first workout"
+                ctaHref="/log"
+              />
             ) : (
               <>
                 {/* Workout Overview - 2x2 Grid */}
