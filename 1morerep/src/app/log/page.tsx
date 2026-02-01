@@ -30,6 +30,14 @@ export const EXERCISE_LIST = [
   "Front Raise",
   "Face Pull",
   "Barbell Curl",
+  "Dumbbell Curl",
+  "Cable Pullover",
+  "Split Squats",
+  "Forearm Curl",
+  "Calf Raise",
+  "Cable Row",
+  "Concentration Curl",
+  "Preacher Curl",
   "Hammer Curl",
   "Tricep Pushdown",
   "Skull Crusher",
@@ -45,6 +53,9 @@ const WORKOUT_TYPES = [
   "Back",
   "Arms",
   "Shoulders",
+  "Full Body",
+  "Upper Body",
+  "Lower Body",
 ];
 
 interface Set {
