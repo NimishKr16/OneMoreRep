@@ -3,11 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 
 const toDateString = (date: Date) => date.toISOString().split("T")[0];
 
+const WEEK_START_DAY = 1; // Monday
+
 const startOfWeek = (date: Date) => {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1) - day; // Monday as start
-  d.setDate(d.getDate() + diff);
+  const diff = (day - WEEK_START_DAY + 7) % 7;
+  d.setDate(d.getDate() - diff);
   d.setHours(0, 0, 0, 0);
   return d;
 };
@@ -83,10 +85,14 @@ export async function GET() {
       ? ((currentVolume - previousVolume) / previousVolume) * 100
       : 0;
 
+  const isWeekComplete = now.getDay() === 0;
+
   return NextResponse.json({
     data: {
       currentVolume,
+      previousVolume,
       changePct,
+      isWeekComplete,
     },
   });
 }

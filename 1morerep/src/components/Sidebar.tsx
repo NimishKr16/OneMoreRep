@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HiChartBar, HiFire, HiSparkles, HiHome } from "react-icons/hi2";
+import {
+  HiChartBar,
+  HiFire,
+  HiSparkles,
+  HiHome,
+  HiHeart,
+} from "react-icons/hi2";
 import { HiInformationCircle } from "react-icons/hi";
 import { GiMuscleUp, GiWeightScale } from "react-icons/gi";
 import { IoClose } from "react-icons/io5";
@@ -16,6 +22,7 @@ interface SidebarProps {
 const menuItems = [
   { name: "Home", href: "/home", icon: HiHome },
   { name: "Workouts", href: "/workouts", icon: GiMuscleUp },
+  { name: "Cardio", href: "/cardio", icon: HiHeart },
   { name: "Progress", href: "/progress", icon: HiChartBar },
   { name: "Body-Weight", href: "/bodyweight", icon: GiWeightScale },
   { name: "Ask Barbella", href: "/ai", icon: HiSparkles },

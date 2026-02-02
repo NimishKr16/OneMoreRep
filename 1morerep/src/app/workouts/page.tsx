@@ -7,12 +7,15 @@ import WorkoutsList from "@/components/workouts/WorkoutsList";
 import WorkoutTypeFilter from "@/components/workouts/WorkoutTypeFilter";
 import BottomNav from "@/components/BottomNav";
 import NewUserEmptyState from "@/components/home/NewUserEmptyState";
-import { WorkoutRow } from "@/components/workouts/WorkoutAccordionCard";
+import { ActivityItem } from "@/types/activity";
 import { HiMenuAlt2, HiPlus, HiUser } from "react-icons/hi";
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
 
 export default function WorkoutsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
+  const [workouts, setWorkouts] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [workoutTypes, setWorkoutTypes] = useState<string[]>([]);
@@ -30,8 +33,8 @@ export default function WorkoutsPage() {
       }
 
       setWorkoutTypes(result?.data || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch workout types");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to fetch workout types"));
     } finally {
       setIsTypesLoading(false);
     }
@@ -53,8 +56,8 @@ export default function WorkoutsPage() {
       }
 
       setWorkouts(result?.data || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch workouts");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to fetch workouts"));
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +95,7 @@ export default function WorkoutsPage() {
             {/* User Avatar */}
             <Link
               href="/profile"
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-105"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-linear-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-105"
             >
               <HiUser className="w-5 h-5" />
             </Link>
@@ -113,7 +116,7 @@ export default function WorkoutsPage() {
               </div>
               <Link
                 href="/log"
-                className="flex items-center gap-2 rounded-xl px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all"
+                className="flex items-center gap-2 rounded-xl px-4 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all"
               >
                 <HiPlus className="w-5 h-5" />
                 Add Workout

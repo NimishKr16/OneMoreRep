@@ -31,22 +31,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from("workouts")
-    .select("date")
-    .eq("user_id", user.id)
-    .order("date", { ascending: true });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  const workouts = data || [];
-  if (workouts.length === 0) {
-    return NextResponse.json({ data: [] });
-  }
-
   let windowStart: Date;
+  let windowEnd: Date;
   let daysCount: number;
 
   if (range === "month") {
@@ -56,33 +42,84 @@ export async function GET(request: Request) {
     start.setHours(0, 0, 0, 0);
     end.setHours(0, 0, 0, 0);
     windowStart = start;
+    windowEnd = end;
     daysCount = end.getDate();
   } else {
     const now = new Date();
     windowStart = new Date(now);
     windowStart.setDate(windowStart.getDate() - 13); // last 14 days
     windowStart.setHours(0, 0, 0, 0);
+    windowEnd = new Date(now);
+    windowEnd.setHours(0, 0, 0, 0);
     daysCount = 14;
   }
 
-  const buckets = new Map<string, number>();
+  const startKey = formatLocalKey(windowStart);
+  const endKey = formatLocalKey(windowEnd);
+
+  const [
+    { data: workouts, error: workoutError },
+    { data: restDays, error: restError },
+  ] = await Promise.all([
+    supabase
+      .from("workouts")
+      .select("date")
+      .eq("user_id", user.id)
+      .gte("date", startKey)
+      .lte("date", endKey)
+      .order("date", { ascending: true }),
+    supabase
+      .from("rest_days")
+      .select("date")
+      .eq("user_id", user.id)
+      .gte("date", startKey)
+      .lte("date", endKey),
+  ]);
+
+  if (workoutError) {
+    return NextResponse.json({ error: workoutError.message }, { status: 500 });
+  }
+
+  if (restError) {
+    return NextResponse.json({ error: restError.message }, { status: 500 });
+  }
+
+  const buckets = new Map<
+    string,
+    { workoutCount: number; restCount: number }
+  >();
   for (let i = 0; i < daysCount; i += 1) {
     const day = new Date(windowStart);
     day.setDate(windowStart.getDate() + i);
-    buckets.set(formatLocalKey(day), 0);
+    buckets.set(formatLocalKey(day), { workoutCount: 0, restCount: 0 });
   }
 
-  for (const workout of workouts) {
+  for (const workout of workouts || []) {
     const workoutDate = parseLocalDate(workout.date);
     const key = formatLocalKey(workoutDate);
-    if (buckets.has(key)) {
-      buckets.set(key, (buckets.get(key) || 0) + 1);
+    const bucket = buckets.get(key);
+    if (bucket) {
+      bucket.workoutCount += 1;
     }
   }
 
-  const points = Array.from(buckets.entries()).map(([key, count]) => {
+  for (const restDay of restDays || []) {
+    const restDate = parseLocalDate(restDay.date);
+    const key = formatLocalKey(restDate);
+    const bucket = buckets.get(key);
+    if (bucket) {
+      bucket.restCount += 1;
+    }
+  }
+
+  const points = Array.from(buckets.entries()).map(([key, bucket]) => {
     const date = parseLocalDate(key);
-    return { date: key, label: formatLabel(date), count };
+    return {
+      date: key,
+      label: formatLabel(date),
+      workoutCount: bucket.workoutCount,
+      restCount: bucket.restCount,
+    };
   });
 
   return NextResponse.json({ data: points });

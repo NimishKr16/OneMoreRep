@@ -2,22 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { HiChevronDown } from "react-icons/hi";
-
-export interface WorkoutSet {
-  id: string;
-  set_order: number;
-  reps: number;
-  weight: number;
-  exercises?: { name: string } | null;
-}
-
-export interface WorkoutRow {
-  id: string;
-  date: string;
-  workout_type: string;
-  notes: string | null;
-  sets: WorkoutSet[];
-}
+import { CardioLogSummary, WorkoutRow, WorkoutSet } from "@/types/activity";
 
 interface WorkoutAccordionCardProps {
   workout: WorkoutRow;
@@ -34,6 +19,15 @@ const formatDate = (date: string) => {
 };
 
 const formatNumber = (value: number) => value.toLocaleString();
+
+const formatCardioSummary = (cardioLogs: CardioLogSummary[]) => {
+  if (cardioLogs.length === 0) return "";
+  if (cardioLogs.length === 1) {
+    const log = cardioLogs[0];
+    return `Cardio • ${log.type} • ${log.duration_minutes} min`;
+  }
+  return `Cardio • ${cardioLogs.length} sessions`;
+};
 
 export default function WorkoutAccordionCard({
   workout,
@@ -92,6 +86,16 @@ export default function WorkoutAccordionCard({
           <p className="text-gray-400 text-sm">
             {summary.setCount} sets • {formatNumber(summary.volume)} kg volume
           </p>
+          {workout.cardio && workout.cardio.length > 0 && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-cyan-900/40 bg-cyan-950/20 px-3 py-1 text-xs font-semibold text-cyan-200">
+              <span className="uppercase tracking-wider text-[10px] text-cyan-300">
+                Cardio
+              </span>
+              <span className="text-cyan-200">
+                {formatCardioSummary(workout.cardio).replace("Cardio • ", "")}
+              </span>
+            </div>
+          )}
         </div>
         <HiChevronDown
           className={`w-5 h-5 text-gray-400 transition-transform ${

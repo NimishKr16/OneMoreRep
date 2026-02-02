@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { mergeActivity } from "@/lib/activity/mergeActivity";
+import { CardioLogSummary, WorkoutRow } from "@/types/activity";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -35,5 +37,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data: data ?? [] });
+  const { data: cardioLogs, error: cardioError } = await supabase
+    .from("cardio_logs")
+    .select(
+      "id,type,duration_minutes,distance,calories,logged_at,note,created_at"
+    )
+    .eq("user_id", user.id)
+    .order("logged_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (cardioError) {
+    return NextResponse.json({ error: cardioError.message }, { status: 500 });
+  }
+
+  const merged = mergeActivity(
+    (data ?? []) as WorkoutRow[],
+    (cardioLogs ?? []) as CardioLogSummary[],
+  );
+
+  const filtered = workoutType
+    ? merged.filter((item) => item.kind === "workout")
+    : merged;
+
+  return NextResponse.json({ data: filtered });
 }

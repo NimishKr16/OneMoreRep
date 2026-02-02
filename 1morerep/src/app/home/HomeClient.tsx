@@ -11,11 +11,12 @@ import WorkoutFrequencyChart, {
   WorkoutFrequencyPoint,
 } from "@/components/home/WorkoutFrequencyChart";
 import RecentWorkoutsList from "@/components/home/RecentWorkoutsList";
-import { WorkoutRow } from "@/components/workouts/WorkoutAccordionCard";
+import { ActivityItem } from "@/types/activity";
 import { HiFire } from "react-icons/hi2";
+import StreakBadge from "@/components/home/StreakBadge";
 import NewUserEmptyState from "@/components/home/NewUserEmptyState";
 import { HiMenuAlt2, HiPencilAlt, HiUser } from "react-icons/hi";
-import { TbArrowDown, TbArrowUp } from "react-icons/tb";
+import { TbArrowDown, TbArrowRight, TbArrowUp } from "react-icons/tb";
 
 interface HomeClientProps {
   user: User;
@@ -48,7 +49,9 @@ interface BodyweightMetrics {
 
 interface WeeklyVolumeMetrics {
   currentVolume: number;
+  previousVolume: number;
   changePct: number | null;
+  isWeekComplete: boolean;
 }
 
 const formatDate = (value: string) => {
@@ -60,8 +63,12 @@ const formatDate = (value: string) => {
   });
 };
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error ? error.message : fallback;
+
 export default function HomeClient({ user }: HomeClientProps) {
   const router = useRouter();
+  const strengthExerciseStorageKey = `omr:strengthExercise:${user.id}`;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lastWorkout, setLastWorkout] = useState<LastWorkoutResponse | null>(
     null,
@@ -98,10 +105,13 @@ export default function HomeClient({ user }: HomeClientProps) {
   const [monthPoints, setMonthPoints] = useState<WorkoutFrequencyPoint[]>([]);
   const [isMonthLoading, setIsMonthLoading] = useState(false);
   const [monthError, setMonthError] = useState("");
-  const [recentWorkouts, setRecentWorkouts] = useState<WorkoutRow[]>([]);
+  const [recentWorkouts, setRecentWorkouts] = useState<ActivityItem[]>([]);
   const [isRecentWorkoutsLoading, setIsRecentWorkoutsLoading] = useState(true);
   const [recentWorkoutsError, setRecentWorkoutsError] = useState("");
   const [hasLoadedRecentWorkouts, setHasLoadedRecentWorkouts] = useState(false);
+  const [streakCount, setStreakCount] = useState<number | null>(null);
+  const [isStreakLoading, setIsStreakLoading] = useState(true);
+  const [nudgeMessage, setNudgeMessage] = useState("");
 
   useEffect(() => {
     const fetchLastWorkout = async () => {
@@ -117,8 +127,10 @@ export default function HomeClient({ user }: HomeClientProps) {
         }
 
         setLastWorkout(result?.data || null);
-      } catch (err: any) {
-        setLastWorkoutError(err.message || "Failed to fetch last workout");
+      } catch (err: unknown) {
+        setLastWorkoutError(
+          getErrorMessage(err, "Failed to fetch last workout"),
+        );
       } finally {
         setIsLastWorkoutLoading(false);
         setHasLoadedLastWorkout(true);
@@ -127,6 +139,21 @@ export default function HomeClient({ user }: HomeClientProps) {
 
     fetchLastWorkout();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(strengthExerciseStorageKey);
+    if (stored) {
+      setSelectedExercise(stored);
+    }
+  }, [strengthExerciseStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (selectedExercise) {
+      window.localStorage.setItem(strengthExerciseStorageKey, selectedExercise);
+    }
+  }, [selectedExercise, strengthExerciseStorageKey]);
 
   useEffect(() => {
     const fetchExercises = async () => {
@@ -141,13 +168,16 @@ export default function HomeClient({ user }: HomeClientProps) {
         const exercises = result?.data || [];
         setStrengthExercises(exercises);
         if (exercises.length > 0) {
-          setSelectedExercise((prev) => prev || exercises[0]);
+          setSelectedExercise((prev) => {
+            if (prev && exercises.includes(prev)) return prev;
+            return exercises[0];
+          });
         } else {
           setIsStrengthLoading(false);
           setHasLoadedStrengthMetrics(true);
         }
-      } catch (err: any) {
-        setStrengthError(err.message || "Failed to fetch exercises");
+      } catch (err: unknown) {
+        setStrengthError(getErrorMessage(err, "Failed to fetch exercises"));
         setIsStrengthLoading(false);
         setHasLoadedStrengthMetrics(true);
       }
@@ -181,8 +211,8 @@ export default function HomeClient({ user }: HomeClientProps) {
         }
 
         setStrengthMetrics(result?.data || null);
-      } catch (err: any) {
-        setStrengthError(err.message || "Failed to fetch metrics");
+      } catch (err: unknown) {
+        setStrengthError(getErrorMessage(err, "Failed to fetch metrics"));
       } finally {
         setIsStrengthLoading(false);
         setHasLoadedStrengthMetrics(true);
@@ -206,8 +236,8 @@ export default function HomeClient({ user }: HomeClientProps) {
         }
 
         setBodyweightMetrics(result?.data || null);
-      } catch (err: any) {
-        setBodyweightError(err.message || "Failed to fetch bodyweight");
+      } catch (err: unknown) {
+        setBodyweightError(getErrorMessage(err, "Failed to fetch bodyweight"));
       } finally {
         setIsBodyweightLoading(false);
         setHasLoadedBodyweight(true);
@@ -231,8 +261,10 @@ export default function HomeClient({ user }: HomeClientProps) {
         }
 
         setWeeklyVolumeMetrics(result?.data || null);
-      } catch (err: any) {
-        setWeeklyVolumeError(err.message || "Failed to fetch weekly volume");
+      } catch (err: unknown) {
+        setWeeklyVolumeError(
+          getErrorMessage(err, "Failed to fetch weekly volume"),
+        );
       } finally {
         setIsWeeklyVolumeLoading(false);
         setHasLoadedWeeklyVolume(true);
@@ -256,8 +288,8 @@ export default function HomeClient({ user }: HomeClientProps) {
         }
 
         setFrequencyPoints(result?.data || []);
-      } catch (err: any) {
-        setFrequencyError(err.message || "Failed to fetch frequency");
+      } catch (err: unknown) {
+        setFrequencyError(getErrorMessage(err, "Failed to fetch frequency"));
       } finally {
         setIsFrequencyLoading(false);
         setHasLoadedFrequency(true);
@@ -281,9 +313,9 @@ export default function HomeClient({ user }: HomeClientProps) {
         }
 
         setRecentWorkouts(result?.data || []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setRecentWorkoutsError(
-          err.message || "Failed to fetch recent workouts",
+          getErrorMessage(err, "Failed to fetch recent workouts"),
         );
       } finally {
         setIsRecentWorkoutsLoading(false);
@@ -292,6 +324,50 @@ export default function HomeClient({ user }: HomeClientProps) {
     };
 
     fetchRecentWorkouts();
+  }, []);
+
+  useEffect(() => {
+    const fetchStreak = async () => {
+      setIsStreakLoading(true);
+
+      try {
+        const response = await fetch("/api/home/active-streak");
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Failed to fetch streak");
+        }
+
+        setStreakCount(result?.data?.streakCount ?? 0);
+      } catch {
+        setStreakCount(null);
+      } finally {
+        setIsStreakLoading(false);
+      }
+    };
+
+    fetchStreak();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sessionKey = "omr:nudgeShown";
+    if (window.sessionStorage.getItem(sessionKey)) return;
+
+    const fetchNudge = async () => {
+      try {
+        const response = await fetch("/api/home/nudge");
+        const result = await response.json();
+
+        if (response.ok && result?.data?.message) {
+          setNudgeMessage(result.data.message);
+        }
+      } finally {
+        window.sessionStorage.setItem(sessionKey, "true");
+      }
+    };
+
+    fetchNudge();
   }, []);
 
   const handleOpenMonthView = async () => {
@@ -311,8 +387,8 @@ export default function HomeClient({ user }: HomeClientProps) {
       }
 
       setMonthPoints(result?.data || []);
-    } catch (err: any) {
-      setMonthError(err.message || "Failed to fetch monthly frequency");
+    } catch (err: unknown) {
+      setMonthError(getErrorMessage(err, "Failed to fetch monthly frequency"));
     } finally {
       setIsMonthLoading(false);
     }
@@ -332,13 +408,19 @@ export default function HomeClient({ user }: HomeClientProps) {
     !hasLoadedBodyweight ||
     !hasLoadedWeeklyVolume ||
     !hasLoadedFrequency ||
-    !hasLoadedRecentWorkouts;
+    !hasLoadedRecentWorkouts ||
+    isFrequencyLoading ||
+    isRecentWorkoutsLoading;
+
+  const hasActivity = frequencyPoints.some(
+    (point) => point.workoutCount > 0 || point.restCount > 0,
+  );
 
   const isNewUser =
     !isHomeLoading &&
     !lastWorkoutSummary &&
     recentWorkouts.length === 0 &&
-    frequencyPoints.length === 0;
+    !hasActivity;
 
   return (
     <div className="flex min-h-screen bg-black">
@@ -364,7 +446,7 @@ export default function HomeClient({ user }: HomeClientProps) {
             {/* User Avatar */}
             <Link
               href="/profile"
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-105"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-linear-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-105"
             >
               <HiUser className="w-5 h-5" />
             </Link>
@@ -375,11 +457,17 @@ export default function HomeClient({ user }: HomeClientProps) {
         <main className="flex-1 p-4 lg:p-8">
           <div className="mx-auto max-w-6xl">
             {/* Dashboard Header */}
-            <div className="mb-8">
-              <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <h2 className="text-3xl font-black text-white tracking-tight">
                 Every rep counts.
               </h2>
+              <StreakBadge count={streakCount} isLoading={isStreakLoading} />
             </div>
+            {nudgeMessage && (
+              <div className="mb-6 rounded-xl border border-cyan-900/40 bg-cyan-950/20 px-4 py-3">
+                <p className="text-sm text-cyan-200/90">{nudgeMessage}</p>
+              </div>
+            )}
             {isHomeLoading ? (
               <div className="flex flex-col items-center justify-center gap-3 py-16">
                 <span className="inline-flex w-8 h-8 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
@@ -521,32 +609,69 @@ export default function HomeClient({ user }: HomeClientProps) {
                           <p className="text-gray-500 text-xs">Loading</p>
                         </div>
                       ) : weeklyVolumeError ? (
-                        <p className="text-gray-500 text-xs">Try again later</p>
+                        <p className="text-gray-500 text-xs">
+                          {weeklyVolumeMetrics
+                            ? "Try again later"
+                            : "No data yet"}
+                        </p>
                       ) : weeklyVolumeMetrics ? (
-                        <div className="flex items-baseline gap-1">
-                          <p className="text-white font-bold text-xl">
-                            {Math.round(
-                              weeklyVolumeMetrics.currentVolume,
-                            ).toLocaleString()}
-                          </p>
-                          <p className="text-gray-500 text-xs">kg</p>
-                          {typeof weeklyVolumeMetrics.changePct ===
-                            "number" && (
-                            <div className="flex items-center gap-1 ml-2">
-                              {weeklyVolumeMetrics.changePct >= 0 ? (
-                                <TbArrowUp className="text-cyan-400 text-xs" />
-                              ) : (
-                                <TbArrowDown className="text-cyan-400 text-xs" />
-                              )}
-                              <p className="text-cyan-400 text-xs font-semibold">
-                                {Math.abs(
-                                  weeklyVolumeMetrics.changePct,
-                                ).toFixed(1)}
-                                %
+                        (() => {
+                          const isWeekComplete =
+                            weeklyVolumeMetrics.isWeekComplete;
+                          const changePct = weeklyVolumeMetrics.changePct ?? 0;
+                          const isNewWeekNoWorkouts =
+                            !isWeekComplete &&
+                            weeklyVolumeMetrics.currentVolume === 0 &&
+                            weeklyVolumeMetrics.previousVolume > 0;
+                          const isNoData =
+                            weeklyVolumeMetrics.currentVolume === 0 &&
+                            weeklyVolumeMetrics.previousVolume === 0;
+                          const displayVolume = isNewWeekNoWorkouts
+                            ? weeklyVolumeMetrics.previousVolume
+                            : weeklyVolumeMetrics.currentVolume;
+
+                          if (isNoData) {
+                            return (
+                              <p className="text-gray-500 text-xs">
+                                No data yet
                               </p>
+                            );
+                          }
+
+                          return (
+                            <div className="flex flex-col">
+                              <div className="flex items-baseline gap-1">
+                                <p className="text-white font-bold text-xl">
+                                  {Math.round(displayVolume).toLocaleString()}
+                                </p>
+                                <p className="text-gray-500 text-xs">kg</p>
+                                {isWeekComplete ? (
+                                  <div className="flex items-center gap-1 ml-2">
+                                    {changePct > 0 ? (
+                                      <TbArrowUp className="text-cyan-400 text-xs" />
+                                    ) : changePct < 0 ? (
+                                      <TbArrowDown className="text-cyan-400 text-xs" />
+                                    ) : (
+                                      <TbArrowRight className="text-cyan-400 text-xs" />
+                                    )}
+                                    <p className="text-cyan-400 text-xs font-semibold">
+                                      {Math.abs(changePct).toFixed(1)}%
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <p className="text-gray-400 text-xs ml-2">
+                                    So far
+                                  </p>
+                                )}
+                              </div>
+                              {isNewWeekNoWorkouts && (
+                                <p className="text-gray-500 text-xs mt-1">
+                                  New week just started
+                                </p>
+                              )}
                             </div>
-                          )}
-                        </div>
+                          );
+                        })()
                       ) : (
                         <p className="text-gray-500 text-xs">No data yet</p>
                       )}
@@ -565,7 +690,11 @@ export default function HomeClient({ user }: HomeClientProps) {
                           <p className="text-gray-500 text-xs">Loading</p>
                         </div>
                       ) : bodyweightError ? (
-                        <p className="text-gray-500 text-xs">Try again later</p>
+                        <p className="text-gray-500 text-xs">
+                          {bodyweightMetrics
+                            ? "Try again later"
+                            : "No data yet"}
+                        </p>
                       ) : bodyweightMetrics ? (
                         <div className="flex items-baseline gap-1">
                           <p className="text-white font-bold text-xl">
@@ -594,7 +723,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                 {/* Add Workout Button */}
                 <Link
                   href="/log"
-                  className="w-full mb-8 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 text-white font-semibold text-base hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center"
+                  className="w-full mb-8 py-4 rounded-xl bg-linear-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 text-white font-semibold text-base hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center"
                 >
                   + Add Workout
                 </Link>
@@ -609,7 +738,10 @@ export default function HomeClient({ user }: HomeClientProps) {
                   ) : (
                     <WorkoutFrequencyChart
                       data={frequencyPoints}
-                      isEmpty={frequencyPoints.length === 0}
+                      isEmpty={frequencyPoints.every(
+                        (point) =>
+                          point.workoutCount === 0 && point.restCount === 0,
+                      )}
                       onClick={handleOpenMonthView}
                     />
                   )}
@@ -639,10 +771,10 @@ export default function HomeClient({ user }: HomeClientProps) {
                 </div>
 
                 {/* Motivational Banner */}
-                <div className="rounded-xl border border-cyan-900/30 bg-gradient-to-r from-cyan-950/30 to-blue-950/30 p-6">
+                <div className="rounded-xl border border-cyan-900/30 bg-linear-to-r from-cyan-950/30 to-blue-950/30 p-6">
                   <p className="text-center text-cyan-400/90 text-sm font-medium flex items-center justify-center gap-2">
                     <HiFire className="text-lg" /> Ready to crush your goals?
-                    Let's get started.
+                    Let’s get started.
                   </p>
                 </div>
               </>
@@ -770,7 +902,9 @@ export default function HomeClient({ user }: HomeClientProps) {
             ) : (
               <WorkoutFrequencyChart
                 data={monthPoints}
-                isEmpty={monthPoints.length === 0}
+                isEmpty={monthPoints.every(
+                  (point) => point.workoutCount === 0 && point.restCount === 0,
+                )}
                 title=""
               />
             )}
