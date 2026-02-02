@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { HiChevronLeft, HiPlus, HiTrash } from "react-icons/hi";
@@ -111,7 +111,7 @@ const normalizeDraftExercises = (items: Exercise[]) => {
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
-export default function LogWorkoutPage() {
+function LogWorkoutPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -828,5 +828,13 @@ export default function LogWorkoutPage() {
 
       <BottomNav />
     </div>
+  );
+}
+
+export default function LogWorkoutPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <LogWorkoutPageClient />
+    </Suspense>
   );
 }

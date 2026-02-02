@@ -3,6 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import { mergeActivity } from "@/lib/activity/mergeActivity";
 import { CardioLogSummary, WorkoutRow } from "@/types/activity";
 
+const normalizeWorkouts = (rows: any[]): WorkoutRow[] =>
+  (rows || []).map((row) => ({
+    ...row,
+    sets: (row.sets || []).map((set: any) => ({
+      ...set,
+      exercises: Array.isArray(set.exercises)
+        ? set.exercises[0] || null
+        : set.exercises || null,
+    })),
+  }));
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = Math.min(Number(searchParams.get("limit")) || 2, 10);
@@ -46,7 +57,7 @@ export async function GET(request: Request) {
   }
 
   const merged = mergeActivity(
-    (data ?? []) as WorkoutRow[],
+    normalizeWorkouts(data ?? []),
     (cardioLogs ?? []) as CardioLogSummary[],
   ).slice(0, limit);
 
