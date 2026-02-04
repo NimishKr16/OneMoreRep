@@ -15,6 +15,7 @@ import { ActivityItem } from "@/types/activity";
 import { HiFire } from "react-icons/hi2";
 import StreakBadge from "@/components/home/StreakBadge";
 import NewUserEmptyState from "@/components/home/NewUserEmptyState";
+import MetricFlipCard from "@/components/home/MetricFlipCard";
 import { HiMenuAlt2, HiPencilAlt, HiUser } from "react-icons/hi";
 import { TbArrowDown, TbArrowRight, TbArrowUp } from "react-icons/tb";
 
@@ -54,6 +55,13 @@ interface WeeklyVolumeMetrics {
   previousToDateVolume: number;
   changePct: number | null;
   hasComparison: boolean;
+}
+
+interface CardioPaceMetrics {
+  overallAvgPace: number | null;
+  lastWeekAvgPace: number | null;
+  changePct: number | null;
+  hasLastWeek: boolean;
 }
 
 const formatDate = (value: string) => {
@@ -97,6 +105,11 @@ export default function HomeClient({ user }: HomeClientProps) {
   const [isWeeklyVolumeLoading, setIsWeeklyVolumeLoading] = useState(true);
   const [weeklyVolumeError, setWeeklyVolumeError] = useState("");
   const [hasLoadedWeeklyVolume, setHasLoadedWeeklyVolume] = useState(false);
+  const [cardioPaceMetrics, setCardioPaceMetrics] =
+    useState<CardioPaceMetrics | null>(null);
+  const [isCardioPaceLoading, setIsCardioPaceLoading] = useState(true);
+  const [cardioPaceError, setCardioPaceError] = useState("");
+  const [isWeeklyVolumeFlipped, setIsWeeklyVolumeFlipped] = useState(false);
   const [frequencyPoints, setFrequencyPoints] = useState<
     WorkoutFrequencyPoint[]
   >([]);
@@ -274,6 +287,30 @@ export default function HomeClient({ user }: HomeClientProps) {
     };
 
     fetchWeeklyVolume();
+  }, []);
+
+  useEffect(() => {
+    const fetchCardioPace = async () => {
+      setIsCardioPaceLoading(true);
+      setCardioPaceError("");
+
+      try {
+        const response = await fetch("/api/home/cardio-pace");
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Failed to fetch cardio pace");
+        }
+
+        setCardioPaceMetrics(result?.data || null);
+      } catch (err: unknown) {
+        setCardioPaceError(getErrorMessage(err, "Failed to fetch cardio pace"));
+      } finally {
+        setIsCardioPaceLoading(false);
+      }
+    };
+
+    fetchCardioPace();
   }, []);
 
   useEffect(() => {
@@ -487,7 +524,7 @@ export default function HomeClient({ user }: HomeClientProps) {
             ) : (
               <>
                 {/* Workout Overview - 2x2 Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-8">
+                <div className="grid grid-cols-2 items-start gap-3 mb-8">
                   {/* Card 1 - Last Workout */}
                   <WorkoutCard
                     title="Last Workout"
@@ -600,85 +637,155 @@ export default function HomeClient({ user }: HomeClientProps) {
                   </WorkoutCard>
 
                   {/* Card 3 - Weekly Volume */}
-                  <WorkoutCard
-                    title="Weekly Volume"
-                    onClick={() => console.log("Weekly Volume clicked")}
-                  >
-                    <div className="flex flex-col">
-                      {isWeeklyVolumeLoading ? (
-                        <div className="flex items-center gap-2">
-                          <span className="inline-flex w-3 h-3 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
-                          <p className="text-gray-500 text-xs">Loading</p>
-                        </div>
-                      ) : weeklyVolumeError ? (
-                        <p className="text-gray-500 text-xs">
-                          {weeklyVolumeMetrics
-                            ? "Try again later"
-                            : "No data yet"}
-                        </p>
-                      ) : weeklyVolumeMetrics ? (
-                        (() => {
-                          const isNewWeekNoWorkouts =
-                            weeklyVolumeMetrics.currentToDateVolume === 0 &&
-                            weeklyVolumeMetrics.previousWeekTotal > 0;
-                          const isNoData =
-                            weeklyVolumeMetrics.currentToDateVolume === 0 &&
-                            weeklyVolumeMetrics.previousWeekTotal === 0;
-                          const displayVolume = isNewWeekNoWorkouts
-                            ? weeklyVolumeMetrics.previousWeekTotal
-                            : weeklyVolumeMetrics.currentToDateVolume;
-                          const hasComparison =
-                            weeklyVolumeMetrics.hasComparison &&
-                            weeklyVolumeMetrics.currentToDateVolume > 0;
-                          const changePct = weeklyVolumeMetrics.changePct ?? 0;
+                  <MetricFlipCard
+                    titleFront="Weekly Volume"
+                    titleBack="Avg Cardio Pace"
+                    isFlipped={isWeeklyVolumeFlipped}
+                    onToggle={() => setIsWeeklyVolumeFlipped((prev) => !prev)}
+                    front={
+                      <div className="flex flex-col">
+                        {isWeeklyVolumeLoading ? (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex w-3 h-3 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
+                            <p className="text-gray-500 text-xs">Loading</p>
+                          </div>
+                        ) : weeklyVolumeError ? (
+                          <p className="text-gray-500 text-xs">
+                            {weeklyVolumeMetrics
+                              ? "Try again later"
+                              : "No data yet"}
+                          </p>
+                        ) : weeklyVolumeMetrics ? (
+                          (() => {
+                            const isNewWeekNoWorkouts =
+                              weeklyVolumeMetrics.currentToDateVolume === 0 &&
+                              weeklyVolumeMetrics.previousWeekTotal > 0;
+                            const isNoData =
+                              weeklyVolumeMetrics.currentToDateVolume === 0 &&
+                              weeklyVolumeMetrics.previousWeekTotal === 0;
+                            const displayVolume = isNewWeekNoWorkouts
+                              ? weeklyVolumeMetrics.previousWeekTotal
+                              : weeklyVolumeMetrics.currentToDateVolume;
+                            const hasComparison =
+                              weeklyVolumeMetrics.hasComparison &&
+                              weeklyVolumeMetrics.currentToDateVolume > 0;
+                            const changePct =
+                              weeklyVolumeMetrics.changePct ?? 0;
 
-                          if (isNoData) {
-                            return (
-                              <p className="text-gray-500 text-xs">
-                                No data yet
-                              </p>
-                            );
-                          }
-
-                          return (
-                            <div className="flex flex-col">
-                              <div className="flex items-baseline gap-1">
-                                <p className="text-white font-bold text-xl">
-                                  {Math.round(displayVolume).toLocaleString()}
+                            if (isNoData) {
+                              return (
+                                <p className="text-gray-500 text-xs">
+                                  No data yet
                                 </p>
-                                <p className="text-gray-500 text-xs">kg</p>
-                                {hasComparison ? (
-                                  <div className="flex items-center gap-1 ml-2">
-                                    {changePct > 0 ? (
-                                      <TbArrowUp className="text-cyan-400 text-xs" />
-                                    ) : changePct < 0 ? (
-                                      <TbArrowDown className="text-cyan-400 text-xs" />
-                                    ) : (
-                                      <TbArrowRight className="text-cyan-400 text-xs" />
-                                    )}
-                                    <p className="text-cyan-400 text-xs font-semibold">
-                                      {Math.abs(changePct).toFixed(1)}%
+                              );
+                            }
+
+                            return (
+                              <div className="flex flex-col">
+                                <div className="flex items-baseline gap-1">
+                                  <p className="text-white font-bold text-xl">
+                                    {Math.round(displayVolume).toLocaleString()}
+                                  </p>
+                                  <p className="text-gray-500 text-xs">kg</p>
+                                  {hasComparison ? (
+                                    <div className="flex items-center gap-1 ml-2">
+                                      {changePct > 0 ? (
+                                        <TbArrowUp className="text-cyan-400 text-xs" />
+                                      ) : changePct < 0 ? (
+                                        <TbArrowDown className="text-cyan-400 text-xs" />
+                                      ) : (
+                                        <TbArrowRight className="text-cyan-400 text-xs" />
+                                      )}
+                                      <p className="text-cyan-400 text-xs font-semibold">
+                                        {Math.abs(changePct).toFixed(1)}%
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-gray-400 text-xs ml-2">
+                                      So far
                                     </p>
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-400 text-xs ml-2">
-                                    So far
+                                  )}
+                                </div>
+                                {isNewWeekNoWorkouts && (
+                                  <p className="text-gray-500 text-xs mt-1">
+                                    New week just started
                                   </p>
                                 )}
                               </div>
-                              {isNewWeekNoWorkouts && (
+                            );
+                          })()
+                        ) : (
+                          <p className="text-gray-500 text-xs">No data yet</p>
+                        )}
+                      </div>
+                    }
+                    back={
+                      <div className="flex flex-col">
+                        {isCardioPaceLoading ? (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex w-3 h-3 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
+                            <p className="text-gray-500 text-xs">Loading</p>
+                          </div>
+                        ) : cardioPaceError ? (
+                          <p className="text-gray-500 text-xs">
+                            Try again later
+                          </p>
+                        ) : cardioPaceMetrics?.overallAvgPace ? (
+                          (() => {
+                            const avgPace = cardioPaceMetrics.overallAvgPace;
+                            const hasLastWeek = cardioPaceMetrics.hasLastWeek;
+                            const changePct = cardioPaceMetrics.changePct ?? 0;
+                            const isFaster = changePct < 0;
+
+                            return (
+                              <div className="flex flex-col">
+                                <div className="flex items-baseline gap-2">
+                                  <p className="text-white font-bold text-xl">
+                                    {avgPace.toFixed(1)}
+                                  </p>
+                                  <p className="text-gray-500 text-xs">
+                                    min/km
+                                  </p>
+                                </div>
                                 <p className="text-gray-500 text-xs mt-1">
-                                  New week just started
+                                  All-time average
                                 </p>
-                              )}
-                            </div>
-                          );
-                        })()
-                      ) : (
-                        <p className="text-gray-500 text-xs">No data yet</p>
-                      )}
-                    </div>
-                  </WorkoutCard>
+                                {hasLastWeek && (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {isFaster ? (
+                                      <TbArrowDown className="text-green-400 text-xs" />
+                                    ) : changePct > 0 ? (
+                                      <TbArrowUp className="text-red-400 text-xs" />
+                                    ) : (
+                                      <TbArrowRight className="text-cyan-400 text-xs" />
+                                    )}
+                                    <p
+                                      className={`text-xs font-semibold ${
+                                        isFaster
+                                          ? "text-green-400"
+                                          : changePct > 0
+                                            ? "text-red-400"
+                                            : "text-cyan-400"
+                                      }`}
+                                    >
+                                      {Math.abs(changePct).toFixed(1)}%
+                                    </p>
+                                    <p className="text-gray-500 text-xs">
+                                      vs last week
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <p className="text-gray-500 text-xs">
+                            No cardio data yet
+                          </p>
+                        )}
+                      </div>
+                    }
+                  />
 
                   {/* Card 4 - Bodyweight */}
                   <WorkoutCard
@@ -725,7 +832,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                 {/* Add Workout Button */}
                 <Link
                   href="/log"
-                  className="w-full mb-8 py-4 rounded-xl bg-linear-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 text-white font-semibold text-base hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center"
+                  className="w-full my-6 -mt-3 py-4 rounded-xl bg-linear-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm border border-blue-500/30 text-white font-semibold text-base hover:from-blue-500/30 hover:to-cyan-500/30 hover:border-blue-400/50 transition-all shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center justify-center"
                 >
                   + Add Workout
                 </Link>
