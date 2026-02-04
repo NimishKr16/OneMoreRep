@@ -48,10 +48,12 @@ interface BodyweightMetrics {
 }
 
 interface WeeklyVolumeMetrics {
-  currentVolume: number;
-  previousVolume: number;
+  currentWeekTotal: number;
+  previousWeekTotal: number;
+  currentToDateVolume: number;
+  previousToDateVolume: number;
   changePct: number | null;
-  isWeekComplete: boolean;
+  hasComparison: boolean;
 }
 
 const formatDate = (value: string) => {
@@ -616,19 +618,19 @@ export default function HomeClient({ user }: HomeClientProps) {
                         </p>
                       ) : weeklyVolumeMetrics ? (
                         (() => {
-                          const isWeekComplete =
-                            weeklyVolumeMetrics.isWeekComplete;
-                          const changePct = weeklyVolumeMetrics.changePct ?? 0;
                           const isNewWeekNoWorkouts =
-                            !isWeekComplete &&
-                            weeklyVolumeMetrics.currentVolume === 0 &&
-                            weeklyVolumeMetrics.previousVolume > 0;
+                            weeklyVolumeMetrics.currentToDateVolume === 0 &&
+                            weeklyVolumeMetrics.previousWeekTotal > 0;
                           const isNoData =
-                            weeklyVolumeMetrics.currentVolume === 0 &&
-                            weeklyVolumeMetrics.previousVolume === 0;
+                            weeklyVolumeMetrics.currentToDateVolume === 0 &&
+                            weeklyVolumeMetrics.previousWeekTotal === 0;
                           const displayVolume = isNewWeekNoWorkouts
-                            ? weeklyVolumeMetrics.previousVolume
-                            : weeklyVolumeMetrics.currentVolume;
+                            ? weeklyVolumeMetrics.previousWeekTotal
+                            : weeklyVolumeMetrics.currentToDateVolume;
+                          const hasComparison =
+                            weeklyVolumeMetrics.hasComparison &&
+                            weeklyVolumeMetrics.currentToDateVolume > 0;
+                          const changePct = weeklyVolumeMetrics.changePct ?? 0;
 
                           if (isNoData) {
                             return (
@@ -645,7 +647,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                                   {Math.round(displayVolume).toLocaleString()}
                                 </p>
                                 <p className="text-gray-500 text-xs">kg</p>
-                                {isWeekComplete ? (
+                                {hasComparison ? (
                                   <div className="flex items-center gap-1 ml-2">
                                     {changePct > 0 ? (
                                       <TbArrowUp className="text-cyan-400 text-xs" />

@@ -21,7 +21,9 @@ const endOfWeek = (start: Date) => {
   return d;
 };
 
-const sumVolume = (rows: any[]) =>
+type VolumeRow = { reps?: number | null; weight?: number | null };
+
+const sumVolume = (rows: VolumeRow[]) =>
   rows.reduce((total, row) => {
     const reps = Number(row.reps) || 0;
     const weight = Number(row.weight) || 0;
@@ -46,6 +48,13 @@ export async function GET() {
   previousWeekStart.setDate(previousWeekStart.getDate() - 7);
   const previousWeekEnd = endOfWeek(previousWeekStart);
 
+  const todayKey = toDateString(now);
+  const dayOffset = Math.floor(
+    (now.getTime() - currentWeekStart.getTime()) / (24 * 60 * 60 * 1000),
+  );
+  const previousWeekSameDay = new Date(previousWeekStart);
+  previousWeekSameDay.setDate(previousWeekStart.getDate() + dayOffset);
+
   const currentWeekRange = {
     start: toDateString(currentWeekStart),
     end: toDateString(currentWeekEnd),
@@ -53,6 +62,14 @@ export async function GET() {
   const previousWeekRange = {
     start: toDateString(previousWeekStart),
     end: toDateString(previousWeekEnd),
+  };
+  const currentToDateRange = {
+    start: toDateString(currentWeekStart),
+    end: todayKey,
+  };
+  const previousToDateRange = {
+    start: toDateString(previousWeekStart),
+    end: toDateString(previousWeekSameDay),
   };
 
   const { data: currentRows, error: currentError } = await supabase
@@ -77,22 +94,54 @@ export async function GET() {
     return NextResponse.json({ error: previousError.message }, { status: 500 });
   }
 
-  const currentVolume = sumVolume(currentRows || []);
-  const previousVolume = sumVolume(previousRows || []);
+  const { data: currentToDateRows, error: currentToDateError } = await supabase
+    .from("sets")
+    .select("reps,weight,workouts!inner(date,user_id)")
+    .eq("workouts.user_id", user.id)
+    .gte("workouts.date", currentToDateRange.start)
+    .lte("workouts.date", currentToDateRange.end);
 
-  const changePct =
-    previousVolume > 0
-      ? ((currentVolume - previousVolume) / previousVolume) * 100
-      : 0;
+  if (currentToDateError) {
+    return NextResponse.json(
+      { error: currentToDateError.message },
+      { status: 500 },
+    );
+  }
 
-  const isWeekComplete = now.getDay() === 0;
+  const { data: previousToDateRows, error: previousToDateError } =
+    await supabase
+      .from("sets")
+      .select("reps,weight,workouts!inner(date,user_id)")
+      .eq("workouts.user_id", user.id)
+      .gte("workouts.date", previousToDateRange.start)
+      .lte("workouts.date", previousToDateRange.end);
+
+  if (previousToDateError) {
+    return NextResponse.json(
+      { error: previousToDateError.message },
+      { status: 500 },
+    );
+  }
+
+  const currentWeekTotal = sumVolume(currentRows || []);
+  const previousWeekTotal = sumVolume(previousRows || []);
+  const currentToDateVolume = sumVolume(currentToDateRows || []);
+  const previousToDateVolume = sumVolume(previousToDateRows || []);
+
+  const hasComparison = previousToDateVolume > 0;
+  const changePct = hasComparison
+    ? ((currentToDateVolume - previousToDateVolume) / previousToDateVolume) *
+      100
+    : null;
 
   return NextResponse.json({
     data: {
-      currentVolume,
-      previousVolume,
+      currentWeekTotal,
+      previousWeekTotal,
+      currentToDateVolume,
+      previousToDateVolume,
       changePct,
-      isWeekComplete,
+      hasComparison,
     },
   });
 }

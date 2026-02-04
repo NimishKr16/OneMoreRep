@@ -17,6 +17,16 @@ const formatDate = (date: string) => {
 };
 
 export default function CardioLogCard({ cardio }: CardioLogCardProps) {
+  const hasDistance =
+    typeof cardio.distance === "number" && cardio.distance > 0;
+  const hasDuration =
+    typeof cardio.duration_minutes === "number" && cardio.duration_minutes > 0;
+  const pace =
+    hasDistance && hasDuration
+      ? cardio.duration_minutes / cardio.distance
+      : null;
+  const paceLabel = pace ? `${pace.toFixed(1)} min/km` : "";
+
   return (
     <div className="rounded-xl border border-gray-800 bg-gray-950/60 p-4">
       <div className="flex items-center gap-2 mb-2">
@@ -28,10 +38,23 @@ export default function CardioLogCard({ cardio }: CardioLogCardProps) {
           {formatDate(cardio.logged_at)}
         </span>
       </div>
-      <p className="text-white font-semibold text-lg mb-1">{cardio.type}</p>
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <p className="text-white font-semibold text-lg">{cardio.type}</p>
+        {paceLabel ? (
+          <span className="rounded-full border border-cyan-800/50 bg-cyan-950/40 px-2.5 py-0.5 text-xs font-semibold text-cyan-200">
+            {paceLabel}
+          </span>
+        ) : null}
+      </div>
       <p className="text-gray-400 text-sm">
-        {cardio.duration_minutes} min
-        {cardio.distance ? ` • ${cardio.distance} km` : ""}
+        <span className="text-gray-200 font-semibold">
+          {cardio.duration_minutes} min
+        </span>
+        {cardio.distance ? (
+          <span className="text-gray-200 font-semibold">
+            {` • ${cardio.distance} km`}
+          </span>
+        ) : null}
         {cardio.calories ? ` • ${cardio.calories} cal` : ""}
       </p>
       {cardio.note && (
