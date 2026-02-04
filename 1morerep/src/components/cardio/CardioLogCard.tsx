@@ -23,7 +23,7 @@ export default function CardioLogCard({ cardio }: CardioLogCardProps) {
     typeof cardio.duration_minutes === "number" && cardio.duration_minutes > 0;
   const pace =
     hasDistance && hasDuration
-      ? cardio.duration_minutes / cardio.distance
+      ? cardio.duration_minutes / (cardio.distance as number)
       : null;
   const paceLabel = pace ? `${pace.toFixed(1)} min/km` : "";
 
