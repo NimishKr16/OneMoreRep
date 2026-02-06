@@ -72,8 +72,14 @@ export async function GET() {
     if (row?.logged_at) activeDates.add(row.logged_at);
   });
 
+  const todayStr = toDateString(today);
+  const hasActivityToday = activeDates.has(todayStr);
+
   let streakCount = 0;
-  for (let offset = 0; offset <= lookbackDays; offset += 1) {
+  // Start checking from today if they have activity, otherwise from yesterday
+  const startOffset = hasActivityToday ? 0 : 1;
+
+  for (let offset = startOffset; offset <= lookbackDays; offset += 1) {
     const dateKey = toDateString(addDays(today, -offset));
     if (activeDates.has(dateKey)) {
       streakCount += 1;

@@ -7,12 +7,6 @@ const addDays = (date: Date, days: number) => {
   return next;
 };
 
-const startOfDay = (date: Date) => {
-  const normalized = new Date(date);
-  normalized.setHours(0, 0, 0, 0);
-  return normalized;
-};
-
 export async function GET() {
   const supabase = await createClient();
 
@@ -41,17 +35,39 @@ export async function GET() {
   }
 
   const latest = data[0];
-  const latestDate = startOfDay(new Date(latest.logged_at));
-  const targetDate = addDays(latestDate, -7);
 
-  const sevenDaysAgoLog = data.find((entry) => {
-    const entryDate = startOfDay(new Date(entry.logged_at));
-    return entryDate.getTime() === targetDate.getTime();
+  // Calculate 7-day rolling average if we have enough data
+  const now = new Date();
+  const sevenDaysAgo = addDays(now, -7);
+  const fourteenDaysAgo = addDays(now, -14);
+
+  const recentLogs = data.filter((entry) => {
+    const entryDate = new Date(entry.logged_at);
+    return entryDate >= sevenDaysAgo;
   });
 
-  const changePct = sevenDaysAgoLog
-    ? ((latest.weight - sevenDaysAgoLog.weight) / sevenDaysAgoLog.weight) * 100
-    : 0;
+  const previousLogs = data.filter((entry) => {
+    const entryDate = new Date(entry.logged_at);
+    return entryDate >= fourteenDaysAgo && entryDate < sevenDaysAgo;
+  });
+
+  let changePct = 0;
+
+  if (recentLogs.length >= 2 && previousLogs.length >= 2) {
+    // Use 7-day rolling average
+    const recentAvg =
+      recentLogs.reduce((sum, entry) => sum + entry.weight, 0) /
+      recentLogs.length;
+    const previousAvg =
+      previousLogs.reduce((sum, entry) => sum + entry.weight, 0) /
+      previousLogs.length;
+    changePct = ((recentAvg - previousAvg) / previousAvg) * 100;
+  } else if (data.length >= 2) {
+    // Fallback: compare last two measurements
+    const latestWeight = data[0].weight;
+    const previousWeight = data[1].weight;
+    changePct = ((latestWeight - previousWeight) / previousWeight) * 100;
+  }
 
   return NextResponse.json({
     data: {

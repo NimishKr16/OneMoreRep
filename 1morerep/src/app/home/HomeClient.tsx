@@ -666,9 +666,7 @@ export default function HomeClient({ user }: HomeClientProps) {
                             const displayVolume = isNewWeekNoWorkouts
                               ? weeklyVolumeMetrics.previousWeekTotal
                               : weeklyVolumeMetrics.currentToDateVolume;
-                            const hasComparison =
-                              weeklyVolumeMetrics.hasComparison &&
-                              weeklyVolumeMetrics.currentToDateVolume > 0;
+                            const hasComparison = weeklyVolumeMetrics.hasComparison;
                             const changePct =
                               weeklyVolumeMetrics.changePct ?? 0;
 

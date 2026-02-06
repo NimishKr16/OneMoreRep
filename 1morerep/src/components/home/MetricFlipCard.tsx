@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { HiRefresh } from "react-icons/hi";
+import { IoIosSwap } from "react-icons/io";
 
 interface MetricFlipCardProps {
   titleFront: string;
@@ -36,7 +36,7 @@ export default function MetricFlipCard({
       className={`relative rounded-xl border border-cyan-500/20 bg-linear-to-br from-gray-900 to-gray-950 p-5 text-left transition-all cursor-pointer hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-0.5 active:scale-[0.98] ${className}`}
     >
       <div className="absolute top-3 right-3 text-cyan-400/60 transition-colors">
-        <HiRefresh
+        <IoIosSwap
           className={`w-4 h-4 transition-transform duration-500 animate-pulse ${isFlipped ? "rotate-180" : ""}`}
         />
       </div>

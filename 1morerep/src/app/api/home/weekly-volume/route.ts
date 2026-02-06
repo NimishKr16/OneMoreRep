@@ -128,7 +128,8 @@ export async function GET() {
   const currentToDateVolume = sumVolume(currentToDateRows || []);
   const previousToDateVolume = sumVolume(previousToDateRows || []);
 
-  const hasComparison = previousToDateVolume > 0;
+  const hasComparison =
+    previousToDateVolume > 0 && currentToDateVolume > 0;
   const changePct = hasComparison
     ? ((currentToDateVolume - previousToDateVolume) / previousToDateVolume) *
       100
