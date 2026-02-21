@@ -3,6 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import StrengthIndexCard from "@/components/progress/StrengthIndexCard";
+import ExerciseTrendsPanel from "@/components/progress/ExerciseTrendsPanel";
+import LatestPrsCard from "@/components/progress/LatestPrsCard";
+import BottomNav from "@/components/BottomNav";
 import { HiMenuAlt2, HiUser } from "react-icons/hi";
 import { HiChartBar } from "react-icons/hi2";
 
@@ -41,33 +45,40 @@ export default function ProgressPage() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            {/* Icon */}
-            <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                <HiChartBar className="w-12 h-12 text-white" />
+        <main className="flex-1 p-4 lg:p-8">
+          <div className="mx-auto max-w-4xl space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <HiChartBar className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-black text-white tracking-tight">
+                  Progress
+                </h1>
+                <p className="text-sm text-gray-400">
+                  Strength trends and performance signals.
+                </p>
               </div>
             </div>
 
-            {/* Coming Soon Text */}
-            <h1 className="text-4xl font-black text-white mb-4 tracking-tight">
-              Progress
-            </h1>
-            <p className="text-xl text-cyan-400 font-bold mb-6">Coming Soon</p>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Visualize your fitness journey with beautiful charts and graphs.
-              Track your strength gains, volume, and performance over time.
-            </p>
+            <StrengthIndexCard />
 
-            {/* Decorative Element */}
-            <div className="mt-8 pt-8 border-t border-gray-800">
-              <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                Stay Tuned
+            <ExerciseTrendsPanel />
+
+            <LatestPrsCard />
+
+            <div className="rounded-2xl border border-gray-800 bg-gray-950/60 p-6 text-center">
+              <p className="text-white font-semibold">
+                More progress graphs soon
+              </p>
+              <p className="text-sm text-gray-400">
+                Weekly volume, PR trends, and lift breakdowns will live here.
               </p>
             </div>
           </div>
         </main>
+
+        <BottomNav />
       </div>
     </div>
   );

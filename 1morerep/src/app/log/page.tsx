@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { HiChevronLeft, HiPlus, HiTrash } from "react-icons/hi";
+import { HiChevronLeft, HiPlus, HiTrash, HiX } from "react-icons/hi";
 import ExerciseAutocomplete from "@/components/ExerciseAutocomplete";
 import BottomNav from "@/components/BottomNav";
 
@@ -72,6 +72,21 @@ interface Exercise {
   sets: Set[];
 }
 
+interface LastWorkoutSet {
+  id: string;
+  set_order: number;
+  reps: number;
+  weight: number;
+  exercises?: { name: string } | null;
+}
+
+interface LastWorkoutResponse {
+  id: string;
+  date: string;
+  workout_type: string;
+  sets: LastWorkoutSet[];
+}
+
 interface WorkoutDraft {
   savedAt: number;
   workoutDate: string;
@@ -89,6 +104,49 @@ const createEmptyExercise = (): Exercise => ({
   name: "",
   sets: [{ id: crypto.randomUUID(), reps: 0, weight: 0 }],
 });
+
+const isPristineExercises = (items: Exercise[]) => {
+  if (items.length !== 1) return false;
+  if (items[0].name.trim()) return false;
+  if (items[0].sets.length !== 1) return false;
+  return items[0].sets.every((set) => !set.reps && !set.weight);
+};
+
+const mapLastWorkoutToExercises = (
+  workout: LastWorkoutResponse,
+): Exercise[] => {
+  const grouped = new Map<string, { name: string; sets: Set[] }>();
+
+  const sortedSets = [...(workout.sets || [])].sort(
+    (a, b) => (a.set_order ?? 0) - (b.set_order ?? 0),
+  );
+
+  for (const set of sortedSets) {
+    const exerciseName = set.exercises?.name?.trim() || "Unknown";
+    const entry = grouped.get(exerciseName) || {
+      name: exerciseName,
+      sets: [],
+    };
+
+    entry.sets.push({
+      id: crypto.randomUUID(),
+      reps: Number(set.reps) || 0,
+      weight: Number(set.weight) || 0,
+    });
+    grouped.set(exerciseName, entry);
+  }
+
+  const mapped = Array.from(grouped.values()).map((exercise) => ({
+    id: crypto.randomUUID(),
+    name: exercise.name,
+    sets:
+      exercise.sets.length > 0
+        ? exercise.sets
+        : [{ id: crypto.randomUUID(), reps: 0, weight: 0 }],
+  }));
+
+  return mapped.length > 0 ? mapped : [createEmptyExercise()];
+};
 
 const normalizeDraftExercises = (items: Exercise[]) => {
   if (!Array.isArray(items) || items.length === 0)
@@ -137,6 +195,9 @@ function LogWorkoutPageClient() {
   const [isCardioSaving, setIsCardioSaving] = useState(false);
   const [error, setError] = useState("");
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+  const [hasDraftContent, setHasDraftContent] = useState(false);
+  const [isAutofillLoading, setIsAutofillLoading] = useState(false);
+  const lastPrefilledTypeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -163,12 +224,52 @@ function LogWorkoutPageClient() {
       if (draft.exercises) {
         setExercises(normalizeDraftExercises(draft.exercises));
       }
+      setHasDraftContent(true);
     } catch {
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
     } finally {
       setHasRestoredDraft(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!hasRestoredDraft || logMode !== "workout") return;
+
+    const resolvedWorkoutType =
+      workoutType === "Custom" ? customWorkoutType.trim() : workoutType;
+
+    if (!resolvedWorkoutType) return;
+    if (lastPrefilledTypeRef.current === resolvedWorkoutType) return;
+
+    const fetchLastWorkout = async () => {
+      setIsAutofillLoading(true);
+      try {
+        const response = await fetch(
+          `/api/workouts/last?workout_type=${encodeURIComponent(
+            resolvedWorkoutType,
+          )}`,
+        );
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Failed to fetch last workout");
+        }
+
+        if (result?.data) {
+          setExercises(mapLastWorkoutToExercises(result.data));
+        } else {
+          setExercises([createEmptyExercise()]);
+        }
+      } catch {
+        // Silent fail to avoid blocking manual logging.
+      } finally {
+        setIsAutofillLoading(false);
+        lastPrefilledTypeRef.current = resolvedWorkoutType;
+      }
+    };
+
+    fetchLastWorkout();
+  }, [customWorkoutType, hasRestoredDraft, logMode, workoutType]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -197,6 +298,29 @@ function LogWorkoutPageClient() {
     setWorkoutType("Push");
     setCustomWorkoutType("");
     setExercises([createEmptyExercise()]);
+  };
+
+  const clearWorkoutType = () => {
+    setExercises([createEmptyExercise()]);
+    const resolvedWorkoutType =
+      workoutType === "Custom" ? customWorkoutType.trim() : workoutType;
+    lastPrefilledTypeRef.current = resolvedWorkoutType || null;
+    setIsAutofillLoading(false);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
+  };
+
+  const clearAllWorkoutData = () => {
+    setWorkoutDate(getToday());
+    setWorkoutType("");
+    setCustomWorkoutType("");
+    setExercises([createEmptyExercise()]);
+    lastPrefilledTypeRef.current = null;
+    setIsAutofillLoading(false);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    }
   };
 
   const resetRestFields = () => {
@@ -677,18 +801,35 @@ function LogWorkoutPageClient() {
                 <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
                   Workout Type
                 </label>
-                <select
-                  value={workoutType}
-                  onChange={(e) => setWorkoutType(e.target.value)}
-                  className="w-full max-w-xs px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
-                >
-                  {WORKOUT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                  <option value="Custom">Custom</option>
-                </select>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={workoutType || ""}
+                    onChange={(e) => setWorkoutType(e.target.value)}
+                    className="w-full max-w-[220px] px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
+                  >
+                    <option value="">Select type</option>
+                    {WORKOUT_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                    <option value="Custom">Custom</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={clearWorkoutType}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-800 text-gray-400 hover:text-white hover:border-cyan-500/30 transition-colors"
+                    aria-label="Clear workout type"
+                  >
+                    <HiX className="h-4 w-4" />
+                  </button>
+                  {isAutofillLoading && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="inline-flex h-3 w-3 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
+                      Loading last workout
+                    </div>
+                  )}
+                </div>
                 {workoutType === "Custom" && (
                   <div className="mt-3">
                     <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
@@ -804,6 +945,14 @@ function LogWorkoutPageClient() {
                 </div>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={clearAllWorkoutData}
+              className="w-full mb-4 py-3 rounded-xl border border-gray-800 text-gray-400 hover:text-white hover:border-cyan-500/30 transition-colors text-sm font-semibold"
+            >
+              Clear all workout data
+            </button>
 
             {/* Add Exercise Button */}
             <button

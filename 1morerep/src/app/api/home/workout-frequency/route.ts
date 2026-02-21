@@ -60,6 +60,7 @@ export async function GET(request: Request) {
   const [
     { data: workouts, error: workoutError },
     { data: restDays, error: restError },
+    { data: cardioLogs, error: cardioError },
   ] = await Promise.all([
     supabase
       .from("workouts")
@@ -74,6 +75,12 @@ export async function GET(request: Request) {
       .eq("user_id", user.id)
       .gte("date", startKey)
       .lte("date", endKey),
+    supabase
+      .from("cardio_logs")
+      .select("logged_at")
+      .eq("user_id", user.id)
+      .gte("logged_at", startKey)
+      .lte("logged_at", endKey),
   ]);
 
   if (workoutError) {
@@ -82,6 +89,10 @@ export async function GET(request: Request) {
 
   if (restError) {
     return NextResponse.json({ error: restError.message }, { status: 500 });
+  }
+
+  if (cardioError) {
+    return NextResponse.json({ error: cardioError.message }, { status: 500 });
   }
 
   const buckets = new Map<
@@ -109,6 +120,15 @@ export async function GET(request: Request) {
     const bucket = buckets.get(key);
     if (bucket) {
       bucket.restCount += 1;
+    }
+  }
+
+  for (const cardio of cardioLogs || []) {
+    const cardioDate = parseLocalDate(cardio.logged_at);
+    const key = formatLocalKey(cardioDate);
+    const bucket = buckets.get(key);
+    if (bucket) {
+      bucket.workoutCount += 1;
     }
   }
 

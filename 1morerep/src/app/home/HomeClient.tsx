@@ -666,7 +666,8 @@ export default function HomeClient({ user }: HomeClientProps) {
                             const displayVolume = isNewWeekNoWorkouts
                               ? weeklyVolumeMetrics.previousWeekTotal
                               : weeklyVolumeMetrics.currentToDateVolume;
-                            const hasComparison = weeklyVolumeMetrics.hasComparison;
+                            const hasComparison =
+                              weeklyVolumeMetrics.hasComparison;
                             const changePct =
                               weeklyVolumeMetrics.changePct ?? 0;
 
@@ -744,35 +745,32 @@ export default function HomeClient({ user }: HomeClientProps) {
                                   <p className="text-gray-500 text-xs">
                                     min/km
                                   </p>
+                                  {hasLastWeek && (
+                                    <>
+                                      {isFaster ? (
+                                        <TbArrowDown className="text-green-400 text-xs" />
+                                      ) : changePct > 0 ? (
+                                        <TbArrowUp className="text-red-400 text-xs" />
+                                      ) : (
+                                        <TbArrowRight className="text-cyan-400 text-xs" />
+                                      )}
+                                      <p
+                                        className={`text-xs font-semibold ${
+                                          isFaster
+                                            ? "text-green-400"
+                                            : changePct > 0
+                                              ? "text-red-400"
+                                              : "text-cyan-400"
+                                        }`}
+                                      >
+                                        {Math.abs(changePct).toFixed(1)}%
+                                      </p>
+                                    </>
+                                  )}
                                 </div>
                                 <p className="text-gray-500 text-xs mt-1">
-                                  All-time average
+                                  All-time
                                 </p>
-                                {hasLastWeek && (
-                                  <div className="flex items-center gap-2 mt-2">
-                                    {isFaster ? (
-                                      <TbArrowDown className="text-green-400 text-xs" />
-                                    ) : changePct > 0 ? (
-                                      <TbArrowUp className="text-red-400 text-xs" />
-                                    ) : (
-                                      <TbArrowRight className="text-cyan-400 text-xs" />
-                                    )}
-                                    <p
-                                      className={`text-xs font-semibold ${
-                                        isFaster
-                                          ? "text-green-400"
-                                          : changePct > 0
-                                            ? "text-red-400"
-                                            : "text-cyan-400"
-                                      }`}
-                                    >
-                                      {Math.abs(changePct).toFixed(1)}%
-                                    </p>
-                                    <p className="text-gray-500 text-xs">
-                                      vs last week
-                                    </p>
-                                  </div>
-                                )}
                               </div>
                             );
                           })()

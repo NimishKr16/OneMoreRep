@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HiPlus } from "react-icons/hi";
-import { GiWeightScale } from "react-icons/gi";
 import { HiHome } from "react-icons/hi";
+import { HiChartBar } from "react-icons/hi2";
 
 export default function BottomNav() {
   const pathname = usePathname();
 
   const isHomeActive = pathname === "/home";
-  const isBodyweightActive = pathname.startsWith("/bodyweight");
+  const isProgressActive = pathname.startsWith("/progress");
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-gray-950 border-t border-gray-900 pb-safe">
@@ -36,13 +36,13 @@ export default function BottomNav() {
         </div>
 
         <Link
-          href="/bodyweight"
+          href="/progress"
           className={`flex-1 flex flex-col items-center gap-1 transition-colors ${
-            isBodyweightActive ? "text-cyan-400" : "text-gray-400"
+            isProgressActive ? "text-cyan-400" : "text-gray-400"
           }`}
         >
-          <GiWeightScale className="w-6 h-6" />
-          <span className="text-xs font-medium">Bodyweight</span>
+          <HiChartBar className="w-6 h-6" />
+          <span className="text-xs font-medium">Progress</span>
         </Link>
       </div>
     </nav>
