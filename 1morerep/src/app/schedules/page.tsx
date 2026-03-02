@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import NotificationToggle from "@/components/notifications/NotificationToggle";
 import { HiMenuAlt2, HiUser } from "react-icons/hi";
-import { HiFire } from "react-icons/hi2";
+import { HiFire, HiBell } from "react-icons/hi2";
 
 export default function SchedulesPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -41,32 +42,49 @@ export default function SchedulesPage() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            {/* Icon */}
-            <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                <HiFire className="w-12 h-12 text-white" />
-              </div>
-            </div>
-
-            {/* Coming Soon Text */}
-            <h1 className="text-4xl font-black text-white mb-4 tracking-tight">
+        <main className="flex-1 p-4 max-w-xl mx-auto w-full space-y-8 pt-8">
+          {/* Page Header */}
+          <div>
+            <h1 className="text-3xl font-black text-white tracking-tight">
               Schedules
             </h1>
-            <p className="text-xl text-cyan-400 font-bold mb-6">Coming Soon</p>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Plan your training week with intelligent scheduling. Build custom
-              workout programs, set rest days, and never miss a session.
+            <p className="text-gray-500 text-sm mt-1">
+              Manage your training preferences and reminders.
             </p>
-
-            {/* Decorative Element */}
-            <div className="mt-8 pt-8 border-t border-gray-800">
-              <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                Stay Tuned
-              </p>
-            </div>
           </div>
+
+          {/* Notifications Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <HiBell className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Notifications
+              </h2>
+            </div>
+            <NotificationToggle />
+          </section>
+
+          {/* Divider */}
+          <div className="border-t border-gray-800" />
+
+          {/* Coming Soon Section */}
+          <section className="text-center py-8">
+            <div className="flex justify-center mb-5">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 flex items-center justify-center">
+                <HiFire className="w-8 h-8 text-cyan-400" />
+              </div>
+            </div>
+            <p className="text-base font-bold text-white mb-2">
+              Smart Scheduling
+            </p>
+            <p className="text-gray-500 text-sm leading-relaxed max-w-xs mx-auto">
+              Build custom training programs, set rest days, and plan your week
+              — coming soon.
+            </p>
+            <p className="mt-4 text-gray-600 text-xs uppercase tracking-wider font-semibold">
+              Stay Tuned
+            </p>
+          </section>
         </main>
       </div>
     </div>
