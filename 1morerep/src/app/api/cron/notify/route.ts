@@ -15,15 +15,20 @@ const NOTIFICATION_PAYLOAD = {
 };
 
 /**
- * POST /api/cron/notify
- * Called by Vercel Cron at 9pm (configured in vercel.json).
+ * GET /api/cron/notify
+ * Called by Vercel Cron at 9pm IST (configured in vercel.json).
  * Sends a push notification to all subscribed users.
  */
-export async function POST(request: Request) {
-  // Verify the request is from Vercel Cron
-  const authHeader = request.headers.get("Authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(request: Request) {
+  // Verify the request is from Vercel Cron.
+  // On Pro plan, Vercel sends Authorization: Bearer CRON_SECRET.
+  // On Hobby plan, no header is sent — we allow it only if CRON_SECRET is not set.
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   const supabase = await createClient();
