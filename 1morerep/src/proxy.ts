@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -39,26 +39,11 @@ export async function middleware(request: NextRequest) {
   if (user && (pathname === '/' || pathname === '/login')) {
     const url = request.nextUrl.clone()
     url.pathname = '/home'
-    return NextResponse.redirect(url)
-  }
-
-  // Redirect unauthenticated users away from protected routes
-  const protectedRoutes = [
-    '/home',
-    '/log',
-    '/workouts',
-    '/progress',
-    '/profile',
-    '/body-weight',
-    '/bodyweight',
-    '/cardio',
-    '/schedules',
-    '/ai',
-  ]
-  if (!user && protectedRoutes.some((route) => pathname.startsWith(route))) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const redirectResponse = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
   return supabaseResponse
