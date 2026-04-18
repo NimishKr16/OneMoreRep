@@ -101,7 +101,7 @@ export default function WorkoutAccordionCard({
   return (
     <div className="w-full overflow-hidden rounded-xl border border-gray-800 bg-gray-950/60">
       <button
-        className="flex w-full min-h-28 items-start justify-between gap-4 p-4 text-left"
+        className="flex w-full min-h-12 items-start justify-between gap-4 p-4 text-left"
         onClick={handleCardClick}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUpOrLeave}

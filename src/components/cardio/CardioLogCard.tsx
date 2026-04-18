@@ -28,7 +28,7 @@ export default function CardioLogCard({ cardio }: CardioLogCardProps) {
   const paceLabel = pace ? `${pace.toFixed(1)} min/km` : "";
 
   return (
-    <div className="w-full min-h-28 rounded-xl border border-gray-800 bg-gray-950/60 p-4">
+    <div className="w-full min-h-12 rounded-xl border border-gray-800 bg-gray-950/60 p-4">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
           Cardio

@@ -629,7 +629,7 @@ export default function HomeClient({
             ) : (
               <>
                 {/* Workout Overview - 2x2 Grid */}
-                <div className="mb-8 grid grid-cols-1 gap-3 auto-rows-fr sm:grid-cols-2 *:h-full">
+                <div className="grid grid-cols-2 items-start gap-3 mb-8">
                   {/* Card 1 - Last Workout */}
                   <WorkoutCard
                     title="Last Workout"

@@ -25,7 +25,7 @@ export default function HomeWeeklyWorkoutsCard({
           <p className="text-gray-500 text-xs">Try again later</p>
         ) : (
           <>
-            <p className="text-white font-bold text-xl mb-1">
+            <p className="text-white font-bold text-base mb-1">
               {weeklyWorkouts} workouts
             </p>
             <p className="text-gray-500 text-xs">Logged this week</p>
