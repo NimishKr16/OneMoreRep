@@ -28,7 +28,7 @@ export default function CardioLogCard({ cardio }: CardioLogCardProps) {
   const paceLabel = pace ? `${pace.toFixed(1)} min/km` : "";
 
   return (
-    <div className="h-fit self-start rounded-xl border border-gray-800 bg-gray-950/60 p-4">
+    <div className="w-full min-h-28 rounded-xl border border-gray-800 bg-gray-950/60 p-4">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">
           Cardio
@@ -58,7 +58,7 @@ export default function CardioLogCard({ cardio }: CardioLogCardProps) {
         {cardio.calories ? ` • ${cardio.calories} cal` : ""}
       </p>
       {cardio.note && (
-        <p className="text-gray-500 text-xs mt-2">{cardio.note}</p>
+        <p className="mt-2 truncate text-gray-500 text-xs">{cardio.note}</p>
       )}
     </div>
   );

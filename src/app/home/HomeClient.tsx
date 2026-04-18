@@ -629,7 +629,7 @@ export default function HomeClient({
             ) : (
               <>
                 {/* Workout Overview - 2x2 Grid */}
-                <div className="grid grid-cols-2 items-start gap-3 mb-8">
+                <div className="mb-8 grid grid-cols-1 gap-3 auto-rows-fr sm:grid-cols-2 *:h-full">
                   {/* Card 1 - Last Workout */}
                   <WorkoutCard
                     title="Last Workout"
@@ -704,7 +704,7 @@ export default function HomeClient({
                         <HiPencilAlt className="w-3.5 h-3.5" />
                       </button>
                       <div className="flex flex-col">
-                        <p className="text-gray-400 text-xs mb-1">
+                        <p className="mb-1 truncate text-gray-400 text-xs">
                           {selectedExercise || "Select exercise"}
                         </p>
                         {isStrengthLoading ? (

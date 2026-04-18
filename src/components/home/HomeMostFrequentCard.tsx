@@ -25,7 +25,7 @@ export default function HomeMostFrequentCard({
           <p className="text-gray-500 text-xs">Try again later</p>
         ) : mostFrequent.length > 0 ? (
           <>
-            <p className="text-white font-bold text-base mb-1">
+            <p className="mb-1 line-clamp-2 text-base font-bold text-white">
               {mostFrequent.join(" • ")}
             </p>
           </>

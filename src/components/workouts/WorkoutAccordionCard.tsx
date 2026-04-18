@@ -99,9 +99,9 @@ export default function WorkoutAccordionCard({
   };
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-950/60 overflow-hidden">
+    <div className="w-full overflow-hidden rounded-xl border border-gray-800 bg-gray-950/60">
       <button
-        className="w-full text-left p-4 flex items-start justify-between gap-4"
+        className="flex w-full min-h-28 items-start justify-between gap-4 p-4 text-left"
         onClick={handleCardClick}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUpOrLeave}
@@ -128,7 +128,7 @@ export default function WorkoutAccordionCard({
               <p className="text-white font-semibold text-lg mb-1">
                 Home workout
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="truncate text-gray-400 text-sm">
                 {workout.notes?.trim() || "Logged from home session"}
               </p>
             </>

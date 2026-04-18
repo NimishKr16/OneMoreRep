@@ -27,7 +27,7 @@ export default function WorkoutCard({
           onClick();
         }
       }}
-      className={`rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 p-5 text-left transition-all group ${
+      className={`h-full min-h-44 rounded-xl border border-gray-800 bg-linear-to-br from-gray-900 to-gray-950 p-5 text-left transition-all group flex flex-col ${
         onClick
           ? "cursor-pointer hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/10"
           : ""
@@ -39,7 +39,7 @@ export default function WorkoutCard({
       </div>
 
       {/* Card Content */}
-      <div className="space-y-2">{children}</div>
+      <div className="flex-1 space-y-2">{children}</div>
     </div>
   );
 }
