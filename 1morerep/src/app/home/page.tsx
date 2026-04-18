@@ -13,5 +13,16 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  return <HomeClient user={user} />;
+  const rawWorkoutLocation = user.user_metadata?.workout_location;
+  const preferredWorkoutLocation: "home" | "gym" | null =
+    rawWorkoutLocation === "home" || rawWorkoutLocation === "gym"
+      ? rawWorkoutLocation
+      : null;
+
+  return (
+    <HomeClient
+      user={user}
+      preferredWorkoutLocation={preferredWorkoutLocation}
+    />
+  );
 }

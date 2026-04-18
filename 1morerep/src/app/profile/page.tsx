@@ -13,5 +13,8 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  return <ProfileClient user={user} />;
+  const workoutLocation =
+    user.user_metadata?.workout_location === "home" ? "home" : "gym";
+
+  return <ProfileClient user={user} initialWorkoutLocation={workoutLocation} />;
 }

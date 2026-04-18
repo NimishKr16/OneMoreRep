@@ -60,6 +60,15 @@ const WORKOUT_TYPES = [
   "Lower Body",
 ];
 
+const HOME_WORKOUT_TYPES = [
+  "Pilates",
+  "HIIT",
+  "Core",
+  "Mobility",
+  "Calesthenics",
+  "Recovery",
+];
+
 interface Set {
   id: string;
   reps: number;
@@ -179,6 +188,9 @@ function LogWorkoutPageClient() {
   const [logMode, setLogMode] = useState<"workout" | "cardio" | "rest">(
     "workout",
   );
+  const [workoutLocation, setWorkoutLocation] = useState<"gym" | "home">("gym");
+  const [homeWorkoutType, setHomeWorkoutType] = useState("");
+  const [homeWorkoutNotes, setHomeWorkoutNotes] = useState("");
   const [restDate, setRestDate] = useState(getToday());
   const [restNote, setRestNote] = useState("");
   const [cardioDate, setCardioDate] = useState(getToday());
@@ -300,6 +312,12 @@ function LogWorkoutPageClient() {
     setExercises([createEmptyExercise()]);
   };
 
+  const resetHomeWorkoutFields = () => {
+    setWorkoutDate(getToday());
+    setHomeWorkoutType("");
+    setHomeWorkoutNotes("");
+  };
+
   const clearWorkoutType = () => {
     setExercises([createEmptyExercise()]);
     const resolvedWorkoutType =
@@ -342,6 +360,8 @@ function LogWorkoutPageClient() {
     setLogMode(mode);
 
     if (mode !== "workout") {
+      setWorkoutLocation("gym");
+      resetHomeWorkoutFields();
       resetWorkoutFields();
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -444,6 +464,52 @@ function LogWorkoutPageClient() {
 
   // Save workout to Supabase
   const saveWorkout = async () => {
+    if (workoutLocation === "home") {
+      const selectedHomeType = homeWorkoutType.trim();
+      if (!selectedHomeType) {
+        setError("Select a home workout type");
+        return;
+      }
+
+      if (!HOME_WORKOUT_TYPES.includes(selectedHomeType)) {
+        setError("Choose a workout type from the suggested options");
+        return;
+      }
+
+      setError("");
+      setIsSaving(true);
+
+      try {
+        const response = await fetch("/api/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "home",
+            date: workoutDate,
+            workoutType: selectedHomeType,
+            notes: homeWorkoutNotes.trim() || null,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Failed to save workout");
+        }
+
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+        }
+        router.push("/home");
+      } catch (err: unknown) {
+        console.error("Save error:", err);
+        setError(getErrorMessage(err, "Failed to save workout"));
+        setIsSaving(false);
+      }
+
+      return;
+    }
+
     // Validation
     if (exercises.length === 0) {
       setError("Add at least one exercise");
@@ -472,6 +538,7 @@ function LogWorkoutPageClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          mode: "gym",
           date: workoutDate,
           workoutType: resolvedWorkoutType,
           exercises: exercises.map((exercise) => ({
@@ -633,6 +700,33 @@ function LogWorkoutPageClient() {
           </button>
         </div>
 
+        {logMode === "workout" && (
+          <div className="mb-6 rounded-xl border border-gray-800 bg-gray-950 p-2 flex">
+            <button
+              type="button"
+              onClick={() => setWorkoutLocation("gym")}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                workoutLocation === "gym"
+                  ? "bg-cyan-500/20 text-cyan-200"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Gym
+            </button>
+            <button
+              type="button"
+              onClick={() => setWorkoutLocation("home")}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                workoutLocation === "home"
+                  ? "bg-cyan-500/20 text-cyan-200"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Home
+            </button>
+          </div>
+        )}
+
         {logMode === "cardio" ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-gray-800 bg-gray-950 p-4 space-y-4">
@@ -773,6 +867,61 @@ function LogWorkoutPageClient() {
               className="w-full py-4 rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 text-white font-bold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isRestSaving ? "Logging..." : "Log Rest Day"}
+            </button>
+          </div>
+        ) : workoutLocation === "home" ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-gray-800 bg-gray-950 p-4 space-y-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={workoutDate}
+                  onChange={(e) => setWorkoutDate(e.target.value)}
+                  className="w-full max-w-xs px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
+                  Type of Workout
+                </label>
+                <input
+                  type="text"
+                  list="home-workout-types"
+                  value={homeWorkoutType}
+                  onChange={(e) => setHomeWorkoutType(e.target.value)}
+                  placeholder="Choose a home workout type"
+                  className="w-full max-w-xs px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
+                />
+                <datalist id="home-workout-types">
+                  {HOME_WORKOUT_TYPES.map((type) => (
+                    <option key={type} value={type} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
+                  Home Workout Notes
+                </label>
+                <textarea
+                  value={homeWorkoutNotes}
+                  onChange={(e) => setHomeWorkoutNotes(e.target.value)}
+                  placeholder="Write your home workout here..."
+                  rows={8}
+                  className="w-full px-4 py-3 rounded-lg bg-black border border-gray-800 text-white text-sm focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={saveWorkout}
+              disabled={isSaving}
+              className="w-full py-4 rounded-xl bg-linear-to-r from-cyan-500 to-blue-600 text-white font-bold text-lg shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              {isSaving ? "Saving..." : "Save Workout"}
             </button>
           </div>
         ) : (

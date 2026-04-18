@@ -10,7 +10,7 @@ webpush.setVapidDetails(
 
 const NOTIFICATION_PAYLOAD = {
   title: "Time to train 💪",
-  body: "Don't break your streak — log today's workout now.",
+  body: "It's time to log today's workout now. Keep the streak going!",
   url: "/log",
 };
 
