@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { HiChevronDown } from "react-icons/hi";
+import { useMemo, useState } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { HiChevronDown, HiDotsVertical } from "react-icons/hi";
 import { CardioLogSummary, WorkoutRow, WorkoutSet } from "@/types/activity";
 
 interface WorkoutAccordionCardProps {
   workout: WorkoutRow;
-  onLongPress?: (workout: WorkoutRow) => void;
+  onOpenActions?: (workout: WorkoutRow) => void;
 }
 
 const formatDate = (date: string) => {
@@ -32,12 +33,10 @@ const formatCardioSummary = (cardioLogs: CardioLogSummary[]) => {
 
 export default function WorkoutAccordionCard({
   workout,
-  onLongPress,
+  onOpenActions,
 }: WorkoutAccordionCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isHomeWorkout = !workout.sets || workout.sets.length === 0;
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressTriggeredRef = useRef(false);
 
   const setsByExercise = useMemo(() => {
     const groups: Record<string, WorkoutSet[]> = {};
@@ -69,49 +68,17 @@ export default function WorkoutAccordionCard({
     };
   }, [setsByExercise, workout.sets]);
 
-  const clearLongPressTimer = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  };
-
-  const handlePointerDown = () => {
-    if (!onLongPress) return;
-    longPressTriggeredRef.current = false;
-    clearLongPressTimer();
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true;
-      onLongPress(workout);
-    }, 550);
-  };
-
-  const handlePointerUpOrLeave = () => {
-    clearLongPressTimer();
-  };
-
   const handleCardClick = () => {
-    if (longPressTriggeredRef.current) {
-      longPressTriggeredRef.current = false;
-      return;
-    }
     setIsOpen((prev) => !prev);
   };
 
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-gray-800 bg-gray-950/60">
+    <div className="relative w-full overflow-hidden rounded-xl border border-gray-800 bg-gray-950/60">
       <button
-        className="flex w-full min-h-12 items-start justify-between gap-4 p-4 text-left"
+        className={`flex w-full min-h-12 items-start gap-4 p-4 text-left ${
+          onOpenActions ? "pr-20" : "pr-14"
+        }`}
         onClick={handleCardClick}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUpOrLeave}
-        onPointerLeave={handlePointerUpOrLeave}
-        onPointerCancel={handlePointerUpOrLeave}
-        onContextMenu={(event) => {
-          if (!onLongPress) return;
-          event.preventDefault();
-          onLongPress(workout);
-        }}
       >
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
@@ -155,11 +122,41 @@ export default function WorkoutAccordionCard({
           )}
         </div>
         <HiChevronDown
-          className={`w-5 h-5 text-gray-400 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`absolute top-4 h-5 w-5 text-gray-400 transition-transform ${
+            onOpenActions ? "right-12" : "right-4"
+          } ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
+
+      {onOpenActions && (
+        <div className="absolute right-3 top-3 z-10">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent text-gray-500 transition-colors hover:bg-gray-800/60 hover:text-gray-200"
+                aria-label="Open workout actions"
+              >
+                <HiDotsVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={8}
+                className="z-50 min-w-40 rounded-lg border border-gray-800 bg-gray-950 p-1 shadow-xl"
+              >
+                <DropdownMenu.Item
+                  onSelect={() => onOpenActions(workout)}
+                  className="cursor-pointer rounded-md px-3 py-2 text-sm text-red-300 outline-none transition-colors data-highlighted:bg-red-500/20 data-highlighted:text-red-200"
+                >
+                  Delete workout
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      )}
 
       {isOpen && (
         <div className="border-t border-gray-800 px-4 pb-4">

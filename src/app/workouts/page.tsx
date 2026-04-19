@@ -135,9 +135,6 @@ export default function WorkoutsPage() {
                 onClear={() => setSelectedType("")}
                 isLoading={isTypesLoading}
               />
-              <p className="mt-3 text-xs text-gray-500">
-                Press and hold a workout card to open actions.
-              </p>
             </div>
 
             {isLoading ? (

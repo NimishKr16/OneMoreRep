@@ -4,7 +4,11 @@ import { useState } from "react";
 import WorkoutAccordionCard from "@/components/workouts/WorkoutAccordionCard";
 import CardioLogCard from "@/components/cardio/CardioLogCard";
 import WorkoutActionsModal from "@/components/workouts/WorkoutActionsModal";
-import { ActivityItem, WorkoutRow } from "@/types/activity";
+import { ActivityItem, CardioLogSummary, WorkoutRow } from "@/types/activity";
+
+type SelectedActivity =
+  | { kind: "workout"; value: WorkoutRow }
+  | { kind: "cardio"; value: CardioLogSummary };
 
 interface WorkoutsListProps {
   workouts: ActivityItem[];
@@ -19,15 +23,20 @@ export default function WorkoutsList({
   error,
   onRetry,
 }: WorkoutsListProps) {
-  const [selectedWorkout, setSelectedWorkout] = useState<WorkoutRow | null>(
-    null,
-  );
+  const [selectedActivity, setSelectedActivity] =
+    useState<SelectedActivity | null>(null);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const openActions = (workout: WorkoutRow) => {
-    setSelectedWorkout(workout);
+  const openWorkoutActions = (workout: WorkoutRow) => {
+    setSelectedActivity({ kind: "workout", value: workout });
+    setDeleteError("");
+    setIsActionsOpen(true);
+  };
+
+  const openCardioActions = (cardio: CardioLogSummary) => {
+    setSelectedActivity({ kind: "cardio", value: cardio });
     setDeleteError("");
     setIsActionsOpen(true);
   };
@@ -35,32 +44,43 @@ export default function WorkoutsList({
   const closeActions = () => {
     if (isDeleting) return;
     setIsActionsOpen(false);
-    setSelectedWorkout(null);
+    setSelectedActivity(null);
     setDeleteError("");
   };
 
-  const handleDeleteWorkout = async () => {
-    if (!selectedWorkout) return;
+  const handleDeleteActivity = async () => {
+    if (!selectedActivity) return;
 
     setDeleteError("");
     setIsDeleting(true);
 
     try {
-      const response = await fetch(`/api/workouts/${selectedWorkout.id}`, {
-        method: "DELETE",
-      });
+      const endpoint =
+        selectedActivity.kind === "workout"
+          ? `/api/workouts/${selectedActivity.value.id}`
+          : `/api/cardio/${selectedActivity.value.id}`;
+      const response = await fetch(endpoint, { method: "DELETE" });
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result?.error || "Failed to delete workout");
+        throw new Error(
+          result?.error ||
+            (selectedActivity.kind === "workout"
+              ? "Failed to delete workout"
+              : "Failed to delete cardio"),
+        );
       }
 
       setIsActionsOpen(false);
-      setSelectedWorkout(null);
+      setSelectedActivity(null);
       onRetry();
     } catch (err: unknown) {
       setDeleteError(
-        err instanceof Error ? err.message : "Failed to delete workout",
+        err instanceof Error
+          ? err.message
+          : selectedActivity.kind === "workout"
+            ? "Failed to delete workout"
+            : "Failed to delete cardio",
       );
     } finally {
       setIsDeleting(false);
@@ -113,21 +133,32 @@ export default function WorkoutsList({
             <WorkoutAccordionCard
               key={item.workout.id}
               workout={item.workout}
-              onLongPress={openActions}
+              onOpenActions={openWorkoutActions}
             />
           ) : (
-            <CardioLogCard key={item.cardio.id} cardio={item.cardio} />
+            <CardioLogCard
+              key={item.cardio.id}
+              cardio={item.cardio}
+              onOpenActions={openCardioActions}
+            />
           ),
         )}
       </div>
 
       <WorkoutActionsModal
         isOpen={isActionsOpen}
-        workoutType={selectedWorkout?.workout_type || "Workout"}
+        itemLabel={
+          selectedActivity?.kind === "workout"
+            ? selectedActivity.value.workout_type || "Workout"
+            : selectedActivity?.kind === "cardio"
+              ? selectedActivity.value.type || "Cardio"
+              : "Activity"
+        }
+        itemKind={selectedActivity?.kind || "workout"}
         isDeleting={isDeleting}
         error={deleteError}
         onClose={closeActions}
-        onDelete={handleDeleteWorkout}
+        onDelete={handleDeleteActivity}
       />
     </>
   );

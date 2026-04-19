@@ -2,7 +2,8 @@
 
 interface WorkoutActionsModalProps {
   isOpen: boolean;
-  workoutType: string;
+  itemLabel: string;
+  itemKind?: "workout" | "cardio";
   isDeleting: boolean;
   error: string;
   onClose: () => void;
@@ -11,7 +12,8 @@ interface WorkoutActionsModalProps {
 
 export default function WorkoutActionsModal({
   isOpen,
-  workoutType,
+  itemLabel,
+  itemKind = "workout",
   isDeleting,
   error,
   onClose,
@@ -30,11 +32,13 @@ export default function WorkoutActionsModal({
 
       <div className="relative w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-950 p-5 shadow-2xl">
         <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">
-          Workout Actions
+          Activity Actions
         </p>
-        <p className="text-white text-sm mb-1">{workoutType}</p>
+        <p className="text-white text-sm mb-1">{itemLabel}</p>
         <p className="text-gray-400 text-sm mb-4">
-          Delete this workout from all screens and metrics.
+          {itemKind === "cardio"
+            ? "Delete this cardio log from all screens and metrics."
+            : "Delete this workout from all screens and metrics."}
         </p>
 
         {error && (
@@ -58,7 +62,11 @@ export default function WorkoutActionsModal({
             disabled={isDeleting}
             className="flex-1 rounded-lg border border-red-500/40 bg-red-500/20 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/30 transition-colors disabled:opacity-60"
           >
-            {isDeleting ? "Deleting..." : "Delete Workout"}
+            {isDeleting
+              ? "Deleting..."
+              : itemKind === "cardio"
+                ? "Delete Cardio"
+                : "Delete Workout"}
           </button>
         </div>
       </div>

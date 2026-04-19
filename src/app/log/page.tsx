@@ -6,6 +6,8 @@ import Link from "next/link";
 import { HiChevronLeft, HiPlus, HiTrash, HiX } from "react-icons/hi";
 import ExerciseAutocomplete from "@/components/ExerciseAutocomplete";
 import BottomNav from "@/components/BottomNav";
+import WorkoutTypeAutocomplete from "@/components/WorkoutTypeAutocomplete";
+import PrebuiltSelect from "@/components/ui/PrebuiltSelect";
 
 // Hardcoded exercise list for autocomplete (UI only)
 export const EXERCISE_LIST = [
@@ -67,6 +69,19 @@ const HOME_WORKOUT_TYPES = [
   "Mobility",
   "Calesthenics",
   "Recovery",
+];
+
+const CARDIO_TYPES = [
+  "Treadmill",
+  "Cycling",
+  "Run",
+  "Walk",
+  "Rowing",
+  "Elliptical",
+  "Swimming",
+  "Stair Climber",
+  "HIIT",
+  "Other",
 ];
 
 interface Set {
@@ -734,24 +749,13 @@ function LogWorkoutPageClient() {
                 <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
                   Cardio Type
                 </label>
-                <select
+                <PrebuiltSelect
                   value={cardioType}
-                  onChange={(e) => setCardioType(e.target.value)}
-                  className="w-full max-w-xs px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
-                >
-                  {[
-                    "Treadmill",
-                    "Cycling",
-                    "Run",
-                    "Walk",
-                    "Rowing",
-                    "Elliptical",
-                  ].map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setCardioType}
+                  options={CARDIO_TYPES}
+                  isSearchable={false}
+                  containerClassName="w-full max-w-xs"
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -887,19 +891,12 @@ function LogWorkoutPageClient() {
                 <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
                   Type of Workout
                 </label>
-                <input
-                  type="text"
-                  list="home-workout-types"
+                <WorkoutTypeAutocomplete
                   value={homeWorkoutType}
-                  onChange={(e) => setHomeWorkoutType(e.target.value)}
+                  onChange={setHomeWorkoutType}
+                  options={HOME_WORKOUT_TYPES}
                   placeholder="Choose a home workout type"
-                  className="w-full max-w-xs px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
                 />
-                <datalist id="home-workout-types">
-                  {HOME_WORKOUT_TYPES.map((type) => (
-                    <option key={type} value={type} />
-                  ))}
-                </datalist>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-2 uppercase tracking-wide">
@@ -951,19 +948,14 @@ function LogWorkoutPageClient() {
                   Workout Type
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
+                  <PrebuiltSelect
                     value={workoutType || ""}
-                    onChange={(e) => setWorkoutType(e.target.value)}
-                    className="w-full max-w-[220px] px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
-                  >
-                    <option value="">Select type</option>
-                    {WORKOUT_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                    <option value="Custom">Custom</option>
-                  </select>
+                    onChange={setWorkoutType}
+                    options={[...WORKOUT_TYPES, "Custom"]}
+                    placeholder="Select type"
+                    isSearchable={false}
+                    containerClassName="w-full max-w-[220px]"
+                  />
                   <button
                     type="button"
                     onClick={clearWorkoutType}

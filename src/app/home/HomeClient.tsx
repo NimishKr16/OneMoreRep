@@ -22,6 +22,7 @@ import WorkoutLocationOnboardingGate from "@/components/home/WorkoutLocationOnbo
 import { createClient } from "@/lib/supabase/client";
 import { HiMenuAlt2, HiPencilAlt, HiUser } from "react-icons/hi";
 import { TbArrowDown, TbArrowRight, TbArrowUp } from "react-icons/tb";
+import { FadeLoader } from "react-spinners";
 
 interface HomeClientProps {
   user: User;
@@ -614,7 +615,7 @@ export default function HomeClient({
             )}
             {isHomeLoading ? (
               <div className="flex flex-col items-center justify-center gap-3 py-16">
-                <span className="inline-flex w-8 h-8 rounded-full border-2 border-gray-700 border-t-cyan-400 animate-spin" />
+                <FadeLoader color="#22d3ee" height={8} width={3} radius={6} />
                 <p className="text-gray-400 text-sm">Loading your dashboard</p>
               </div>
             ) : isNewUser ? (
