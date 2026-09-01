@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import WeightInput from "@/components/ui/WeightInput";
 
 interface BodyWeightLogFormProps {
-  onSave: (weight: number, loggedAt: string) => Promise<void>;
+  /** Receives the weight already converted to kg for storage. */
+  onSave: (weightKg: number, loggedAt: string) => Promise<void>;
   isSaving: boolean;
 }
 
@@ -11,22 +13,23 @@ export default function BodyWeightLogForm({
   onSave,
   isSaving,
 }: BodyWeightLogFormProps) {
-  const [weight, setWeight] = useState("");
+  // Held in kg so flipping the unit pill converts the entry rather than
+  // reinterpreting the digits in the new unit.
+  const [weightKg, setWeightKg] = useState(0);
   const [loggedAt, setLoggedAt] = useState(
     new Date().toISOString().split("T")[0],
   );
   const [error, setError] = useState("");
 
   const handleSave = async () => {
-    const parsedWeight = parseFloat(weight);
-    if (Number.isNaN(parsedWeight) || parsedWeight <= 0) {
+    if (!Number.isFinite(weightKg) || weightKg <= 0) {
       setError("Enter a valid weight");
       return;
     }
 
     setError("");
-    await onSave(parsedWeight, loggedAt);
-    setWeight("");
+    await onSave(weightKg, loggedAt);
+    setWeightKg(0);
   };
 
   return (
@@ -36,13 +39,12 @@ export default function BodyWeightLogForm({
       </p>
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <div className="grid grid-cols-1 gap-3">
-        <input
-          type="number"
-          inputMode="decimal"
-          placeholder="Weight (kg)"
-          value={weight}
-          onChange={(e) => setWeight(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
+        <WeightInput
+          valueKg={weightKg}
+          onChangeKg={setWeightKg}
+          showUnitSuffix
+          ariaLabel="Bodyweight"
+          className="w-full px-4 py-3 pr-12 rounded-lg bg-black border border-gray-800 text-white focus:border-cyan-500 focus:outline-none"
         />
         <input
           type="date"

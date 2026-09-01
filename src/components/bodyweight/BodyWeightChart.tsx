@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Line,
   LineChart,
@@ -9,9 +10,12 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatWeight, toDisplayWeight } from "@/lib/units";
 
 export interface BodyWeightPoint {
   date: string;
+  /** Stored value, always in kg. */
   weight: number;
 }
 
@@ -34,6 +38,18 @@ const formatTooltipLabel = (label: React.ReactNode) => {
 };
 
 export default function BodyWeightChart({ data }: BodyWeightChartProps) {
+  const { unit, unitLabel } = useWeightUnit();
+
+  // Convert once here so the axis, line and tooltip all share the same scale.
+  const displayData = useMemo(
+    () =>
+      data.map((point) => ({
+        ...point,
+        weight: toDisplayWeight(point.weight, unit),
+      })),
+    [data, unit],
+  );
+
   if (data.length === 0) return null;
 
   return (
@@ -43,7 +59,7 @@ export default function BodyWeightChart({ data }: BodyWeightChartProps) {
       </p>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          data={data}
+          data={displayData}
           margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
@@ -55,10 +71,12 @@ export default function BodyWeightChart({ data }: BodyWeightChartProps) {
             tickLine={false}
           />
           <YAxis
+            tickFormatter={(value: number) => formatWeight(value, unit, 0)}
             tick={{ fill: "#9ca3af", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            width={32}
+            width={36}
+            domain={["auto", "auto"]}
           />
           <Tooltip
             contentStyle={{
@@ -69,6 +87,11 @@ export default function BodyWeightChart({ data }: BodyWeightChartProps) {
               fontSize: 12,
             }}
             labelFormatter={formatTooltipLabel}
+            formatter={(value) =>
+              typeof value === "number"
+                ? `${formatWeight(value, unit)} ${unitLabel}`
+                : value
+            }
           />
           <Line
             type="monotone"

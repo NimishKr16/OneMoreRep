@@ -5,6 +5,8 @@ import ExerciseAutocomplete from "@/components/ExerciseAutocomplete";
 import ExerciseTrendChart, {
   ExerciseTrendPoint,
 } from "@/components/progress/ExerciseTrendChart";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatWeight, toDisplayWeight } from "@/lib/units";
 
 const formatCompact = (value: number) =>
   new Intl.NumberFormat(undefined, {
@@ -12,12 +14,11 @@ const formatCompact = (value: number) =>
     maximumFractionDigits: 1,
   }).format(value);
 
-const formatDecimal = (value: number) => value.toFixed(1);
-
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
 export default function ExerciseTrendsPanel() {
+  const { unit, unitLabel } = useWeightUnit();
   const [exercises, setExercises] = useState<string[]>([]);
   const [selectedExercise, setSelectedExercise] = useState("");
   const [trendData, setTrendData] = useState<ExerciseTrendPoint[]>([]);
@@ -87,6 +88,17 @@ export default function ExerciseTrendsPanel() {
   const hasExercises = exercises.length > 0;
   const isLoading = isLoadingExercises || isLoadingTrends;
 
+  // The API returns kg; convert before handing the points to the charts.
+  const displayTrendData = useMemo<ExerciseTrendPoint[]>(
+    () =>
+      trendData.map((point) => ({
+        ...point,
+        oneRepMax: toDisplayWeight(point.oneRepMax, unit),
+        volume: toDisplayWeight(point.volume, unit),
+      })),
+    [trendData, unit],
+  );
+
   const headerSubtitle = useMemo(() => {
     if (isLoadingExercises) return "Loading exercises";
     if (!hasExercises) return "No exercises logged yet";
@@ -135,15 +147,15 @@ export default function ExerciseTrendsPanel() {
       ) : (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <ExerciseTrendChart
-            title="1 Rep Max trend"
-            data={trendData}
+            title={`1 Rep Max trend (${unitLabel})`}
+            data={displayTrendData}
             dataKey="oneRepMax"
             stroke="#38bdf8"
-            valueFormatter={(value) => formatDecimal(value)}
+            valueFormatter={(value) => formatWeight(value, unit)}
           />
           <ExerciseTrendChart
-            title="Volume trend"
-            data={trendData}
+            title={`Volume trend (${unitLabel})`}
+            data={displayTrendData}
             dataKey="volume"
             stroke="#22c55e"
             valueFormatter={(value) => formatCompact(value)}

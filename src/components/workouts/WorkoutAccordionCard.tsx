@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { HiChevronDown, HiDotsVertical } from "react-icons/hi";
 import { CardioLogSummary, WorkoutRow, WorkoutSet } from "@/types/activity";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatStoredWeight, formatVolume } from "@/lib/units";
 
 interface WorkoutAccordionCardProps {
   workout: WorkoutRow;
@@ -20,8 +22,6 @@ const formatDate = (date: string) => {
   });
 };
 
-const formatNumber = (value: number) => value.toLocaleString();
-
 const formatCardioSummary = (cardioLogs: CardioLogSummary[]) => {
   if (cardioLogs.length === 0) return "";
   if (cardioLogs.length === 1) {
@@ -35,6 +35,7 @@ export default function WorkoutAccordionCard({
   workout,
   onOpenActions,
 }: WorkoutAccordionCardProps) {
+  const { unit, unitLabel } = useWeightUnit();
   const [isOpen, setIsOpen] = useState(false);
   const isHomeWorkout = !workout.sets || workout.sets.length === 0;
 
@@ -56,7 +57,7 @@ export default function WorkoutAccordionCard({
   const summary = useMemo(() => {
     const setCount = workout.sets?.length || 0;
     const exerciseCount = Object.keys(setsByExercise).length;
-    const volume = (workout.sets || []).reduce(
+    const volumeKg = (workout.sets || []).reduce(
       (total, set) => total + (set.reps || 0) * (set.weight || 0),
       0,
     );
@@ -64,7 +65,7 @@ export default function WorkoutAccordionCard({
     return {
       setCount,
       exerciseCount,
-      volume,
+      volumeKg,
     };
   }, [setsByExercise, workout.sets]);
 
@@ -105,8 +106,8 @@ export default function WorkoutAccordionCard({
                 {summary.exerciseCount} exercises
               </p>
               <p className="text-gray-400 text-sm">
-                {summary.setCount} sets • {formatNumber(summary.volume)} kg
-                volume
+                {summary.setCount} sets • {formatVolume(summary.volumeKg, unit)}{" "}
+                {unitLabel} volume
               </p>
             </>
           )}
@@ -190,7 +191,8 @@ export default function WorkoutAccordionCard({
                       >
                         <span>Set {set.set_order}</span>
                         <span>
-                          {set.reps} reps × {set.weight} kg
+                          {set.reps} reps ×{" "}
+                          {formatStoredWeight(set.weight, unit)} {unitLabel}
                         </span>
                       </div>
                     ))}

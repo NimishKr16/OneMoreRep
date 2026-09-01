@@ -1,6 +1,10 @@
 "use client";
 
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatStoredWeight } from "@/lib/units";
+
 interface BodyWeightCurrentCardProps {
+  /** Stored value, always in kg. */
   weight: number | null;
   loggedAt: string | null;
   isEmpty: boolean;
@@ -20,6 +24,8 @@ export default function BodyWeightCurrentCard({
   loggedAt,
   isEmpty,
 }: BodyWeightCurrentCardProps) {
+  const { unit, unitLabel } = useWeightUnit();
+
   if (isEmpty) {
     return (
       <div className="rounded-xl border border-cyan-900/40 bg-gradient-to-r from-cyan-950/30 to-blue-950/30 p-4">
@@ -37,8 +43,10 @@ export default function BodyWeightCurrentCard({
         Current Weight
       </p>
       <div className="flex items-end gap-2 mb-1">
-        <span className="text-3xl font-black text-white">{weight}</span>
-        <span className="text-gray-400 text-sm">kg</span>
+        <span className="text-3xl font-black text-white">
+          {weight === null ? "--" : formatStoredWeight(weight, unit)}
+        </span>
+        <span className="text-gray-400 text-sm">{unitLabel}</span>
       </div>
       <p className="text-gray-500 text-sm">
         Logged on {loggedAt ? formatDate(loggedAt) : "-"}

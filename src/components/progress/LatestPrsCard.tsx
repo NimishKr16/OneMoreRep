@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TbArrowUpRight } from "react-icons/tb";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatStoredWeight } from "@/lib/units";
 
 interface PrEvent {
   exercise: string;
@@ -25,14 +27,11 @@ const formatDate = (value: string) => {
   });
 };
 
-const formatDecimal = (value: number) => value.toFixed(1);
-
-const formatWeight = (value: number) => formatDecimal(value);
-
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
 export default function LatestPrsCard() {
+  const { unit, unitLabel } = useWeightUnit();
   const [data, setData] = useState<LatestPrsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -98,11 +97,12 @@ export default function LatestPrsCard() {
             {data?.oneRmPr ? (
               <div className="mt-2 space-y-1">
                 <p className="text-xl font-bold text-white">
-                  {formatWeight(data.oneRmPr.value)}
+                  {formatStoredWeight(data.oneRmPr.value, unit)} {unitLabel}
                 </p>
                 <p className="text-xs text-gray-400">{data.oneRmPr.exercise}</p>
                 <p className="text-[11px] text-gray-500">
-                  {formatDate(data.oneRmPr.date)} • {data.oneRmPr.weight} x{" "}
+                  {formatDate(data.oneRmPr.date)} •{" "}
+                  {formatStoredWeight(data.oneRmPr.weight, unit)} {unitLabel} x{" "}
                   {data.oneRmPr.reps}
                 </p>
               </div>
@@ -118,13 +118,14 @@ export default function LatestPrsCard() {
             {data?.fiveRmPr ? (
               <div className="mt-2 space-y-1">
                 <p className="text-xl font-bold text-white">
-                  {formatWeight(data.fiveRmPr.value)}
+                  {formatStoredWeight(data.fiveRmPr.value, unit)} {unitLabel}
                 </p>
                 <p className="text-xs text-gray-400">
                   {data.fiveRmPr.exercise}
                 </p>
                 <p className="text-[11px] text-gray-500">
-                  {formatDate(data.fiveRmPr.date)} • {data.fiveRmPr.weight} x{" "}
+                  {formatDate(data.fiveRmPr.date)} •{" "}
+                  {formatStoredWeight(data.fiveRmPr.weight, unit)} {unitLabel} x{" "}
                   {data.fiveRmPr.reps}
                 </p>
               </div>

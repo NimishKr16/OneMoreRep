@@ -20,6 +20,8 @@ import HomeWeeklyWorkoutsCard from "@/components/home/HomeWeeklyWorkoutsCard";
 import HomeMostFrequentCard from "@/components/home/HomeMostFrequentCard";
 import WorkoutLocationOnboardingGate from "@/components/home/WorkoutLocationOnboardingGate";
 import { createClient } from "@/lib/supabase/client";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatStoredWeight, formatVolume } from "@/lib/units";
 import { HiMenuAlt2, HiPencilAlt, HiUser } from "react-icons/hi";
 import { TbArrowDown, TbArrowRight, TbArrowUp } from "react-icons/tb";
 import { FadeLoader } from "react-spinners";
@@ -93,6 +95,7 @@ export default function HomeClient({
 }: HomeClientProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { unit, unitLabel } = useWeightUnit();
   const strengthExerciseStorageKey = `omr:strengthExercise:${user.id}`;
   const [currentPreferredWorkoutLocation, setCurrentPreferredWorkoutLocation] =
     useState<"home" | "gym" | null>(preferredWorkoutLocation);
@@ -720,9 +723,12 @@ export default function HomeClient({
                         ) : strengthMetrics ? (
                           <div className="flex items-baseline gap-1">
                             <p className="text-white font-bold text-xl">
-                              {strengthMetrics.maxWeight}
+                              {formatStoredWeight(
+                                strengthMetrics.maxWeight,
+                                unit,
+                              )}
                             </p>
-                            <p className="text-gray-500 text-xs">kg</p>
+                            <p className="text-gray-500 text-xs">{unitLabel}</p>
                             {typeof strengthMetrics.volumeChangePct ===
                               "number" && (
                               <div className="flex items-center gap-1 ml-2">
@@ -808,11 +814,11 @@ export default function HomeClient({
                                 <div className="flex flex-col">
                                   <div className="flex items-baseline gap-1">
                                     <p className="text-white font-bold text-xl">
-                                      {Math.round(
-                                        displayVolume,
-                                      ).toLocaleString()}
+                                      {formatVolume(displayVolume, unit)}
                                     </p>
-                                    <p className="text-gray-500 text-xs">kg</p>
+                                    <p className="text-gray-500 text-xs">
+                                      {unitLabel}
+                                    </p>
                                     {hasComparison ? (
                                       <div className="flex items-center gap-1 ml-2">
                                         {changePct > 0 ? (
@@ -932,9 +938,12 @@ export default function HomeClient({
                       ) : bodyweightMetrics ? (
                         <div className="flex items-baseline gap-1">
                           <p className="text-white font-bold text-xl">
-                            {bodyweightMetrics.latestWeight}
+                            {formatStoredWeight(
+                              bodyweightMetrics.latestWeight,
+                              unit,
+                            )}
                           </p>
-                          <p className="text-gray-500 text-xs">kg</p>
+                          <p className="text-gray-500 text-xs">{unitLabel}</p>
                           <div className="flex items-center gap-1 ml-2">
                             {bodyweightMetrics.changePct >= 0 ? (
                               <TbArrowUp className="text-blue-400 text-xs" />

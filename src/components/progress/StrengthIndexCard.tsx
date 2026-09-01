@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TbArrowDown, TbArrowUp, TbMinus } from "react-icons/tb";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatStoredWeight } from "@/lib/units";
 
 interface StrengthIndexData {
   strengthIndex: number | null;
@@ -35,6 +37,7 @@ const formatDate = (value: string | null) => {
 };
 
 export default function StrengthIndexCard() {
+  const { unit, unitLabel } = useWeightUnit();
   const [data, setData] = useState<StrengthIndexData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -148,7 +151,9 @@ export default function StrengthIndexCard() {
                   Top estimated 1RM
                 </p>
                 <p className="text-base font-semibold text-white">
-                  {data.topE1rm ? formatDecimal(data.topE1rm) : "--"}
+                  {data.topE1rm
+                    ? `${formatStoredWeight(data.topE1rm, unit)} ${unitLabel}`
+                    : "--"}
                 </p>
               </div>
               <div className="rounded-lg border border-gray-800 bg-gray-950/70 p-3">

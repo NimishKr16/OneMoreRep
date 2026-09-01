@@ -8,6 +8,7 @@ import ExerciseAutocomplete from "@/components/ExerciseAutocomplete";
 import BottomNav from "@/components/BottomNav";
 import WorkoutTypeAutocomplete from "@/components/WorkoutTypeAutocomplete";
 import PrebuiltSelect from "@/components/ui/PrebuiltSelect";
+import WeightInput from "@/components/ui/WeightInput";
 
 // Hardcoded exercise list for autocomplete (UI only)
 export const EXERCISE_LIST = [
@@ -1044,18 +1045,16 @@ function LogWorkoutPageClient() {
                           />
                         </div>
 
-                        {/* Weight Input */}
+                        {/* Weight Input — shown in the user's unit, stored in kg */}
                         <div className="flex-1">
-                          <input
-                            type="number"
-                            placeholder="Weight (kg)"
-                            value={set.weight || ""}
-                            onChange={(e) =>
+                          <WeightInput
+                            valueKg={set.weight}
+                            onChangeKg={(weightKg) =>
                               updateSet(
                                 exercise.id,
                                 set.id,
                                 "weight",
-                                parseFloat(e.target.value) || 0,
+                                weightKg,
                               )
                             }
                             className="w-full px-3 py-2 rounded-lg bg-black border border-gray-800 text-white text-sm focus:border-cyan-500 focus:outline-none"

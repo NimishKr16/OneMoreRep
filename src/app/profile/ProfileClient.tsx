@@ -6,6 +6,7 @@ import Link from "next/link";
 import * as Switch from "@radix-ui/react-switch";
 import LogoutButton from "@/components/LogoutButton";
 import { createClient } from "@/lib/supabase/client";
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
 import { HiArrowLeft, HiUser, HiMail } from "react-icons/hi";
 
 interface ProfileClientProps {
@@ -18,6 +19,7 @@ export default function ProfileClient({
   initialWorkoutLocation,
 }: ProfileClientProps) {
   const supabase = createClient();
+  const { unit, setUnit } = useWeightUnit();
   const [workoutLocation, setWorkoutLocation] = useState<"home" | "gym">(
     initialWorkoutLocation,
   );
@@ -135,6 +137,42 @@ export default function ProfileClient({
                     }`}
                   >
                     Gym
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">
+                  Weight Units
+                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <span
+                    className={`text-sm font-semibold transition-colors ${
+                      unit === "kg"
+                        ? "text-cyan-300"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    KG
+                  </span>
+
+                  <Switch.Root
+                    checked={unit === "lbs"}
+                    onCheckedChange={(checked) => setUnit(checked ? "lbs" : "kg")}
+                    className="relative h-8 w-16 rounded-full bg-gray-800 data-[state=checked]:bg-cyan-500/30 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
+                    aria-label="Toggle weight units between KG and LBS"
+                  >
+                    <Switch.Thumb className="block h-6 w-6 translate-x-1 rounded-full bg-white shadow-md transition-transform data-[state=checked]:translate-x-9" />
+                  </Switch.Root>
+
+                  <span
+                    className={`text-sm font-semibold transition-colors ${
+                      unit === "lbs"
+                        ? "text-cyan-300"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    LBS
                   </span>
                 </div>
               </div>

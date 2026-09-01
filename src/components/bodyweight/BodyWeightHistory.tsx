@@ -1,7 +1,11 @@
 "use client";
 
+import { useWeightUnit } from "@/contexts/WeightUnitContext";
+import { formatStoredWeight } from "@/lib/units";
+
 interface BodyWeightHistoryItem {
   id: string;
+  /** Stored value, always in kg. */
   weight: number;
   logged_at: string;
 }
@@ -20,6 +24,8 @@ const formatDate = (value: string) => {
 };
 
 export default function BodyWeightHistory({ items }: BodyWeightHistoryProps) {
+  const { unit, unitLabel } = useWeightUnit();
+
   if (items.length === 0) return null;
 
   return (
@@ -34,7 +40,7 @@ export default function BodyWeightHistory({ items }: BodyWeightHistoryProps) {
               {formatDate(item.logged_at)}
             </span>
             <span className="text-white text-sm font-semibold">
-              {item.weight} kg
+              {formatStoredWeight(item.weight, unit)} {unitLabel}
             </span>
           </div>
         ))}
